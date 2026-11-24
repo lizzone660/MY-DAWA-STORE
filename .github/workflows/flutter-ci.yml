@@ -49,10 +49,8 @@ jobs:
           from pathlib import Path
           p = Path("android/app/build.gradle.kts")
           s = p.read_text()
-          props = '''import java.util.Properties
-          import java.io.FileInputStream
-
-          val keystoreProperties = Properties()
+          s = "import java.util.Properties\\nimport java.io.FileInputStream\\n\\n" + s
+          props = '''val keystoreProperties = Properties()
           val keystorePropertiesFile = rootProject.file("key.properties")
           if (keystorePropertiesFile.exists()) {
               keystoreProperties.load(FileInputStream(keystorePropertiesFile))
