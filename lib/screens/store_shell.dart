@@ -22,7 +22,7 @@ class _StoreShellState extends State<StoreShell> {
   final _closingService = DailyClosingService();
   Timer? _closingTimer;
   String get _actorId => widget.user.id;
-  bool _loading = true;
+  bool _loading = true;\n  Map<String, Object> _metrics = {};
 
   @override
   void initState() {
@@ -37,7 +37,7 @@ class _StoreShellState extends State<StoreShell> {
   Future<void> _initializeLocalStore() async {
     final existing = await _repository.medicines();
     if (existing.isEmpty) {
-      for (final medicine in _medicines) { await _repository.saveMedicine(medicine); }
+      for (final medicine in _medicines) { await _repository.saveMedicine(medicine, actorId: _actorId); }
     }
     await _closingService.closePreviousDay();
     await _closingService.closeIfDue();
@@ -115,10 +115,10 @@ class _StoreShellState extends State<StoreShell> {
       const SizedBox(height: 5), const Text('Your store at a glance • Offline data', style: TextStyle(color: Color(0xFF929BB9))),
       const SizedBox(height: 20),
       Wrap(spacing: 12, runSpacing: 12, children: [
-        _metric('TODAY’S SALES', 'TZS 536,000', Icons.trending_up, const Color(0xFF28C6D5), constraints.maxWidth),
-        if (_isAdmin) _metric('TODAY’S PROFIT', 'TZS 124,500', Icons.account_balance_wallet_outlined, const Color(0xFF9B72F5), constraints.maxWidth),
-        _metric('TOTAL STOCK', '255 units', Icons.inventory_2_outlined, const Color(0xFF42C99A), constraints.maxWidth),
-        _metric('RUNNING OUT', '02 items', Icons.warning_amber_rounded, const Color(0xFFFFB547), constraints.maxWidth),
+        _metric('TODAY’S SALES', 'TZS ' + (_metrics['revenue'] ?? 0).toString(), Icons.trending_up, const Color(0xFF28C6D5), constraints.maxWidth),
+        if (_isAdmin) _metric('TODAY’S PROFIT', 'TZS ' + (_metrics['profit'] ?? 0).toString(), Icons.account_balance_wallet_outlined, const Color(0xFF9B72F5), constraints.maxWidth),
+        _metric('TOTAL STOCK', (_metrics['stockUnits'] ?? 0).toString() + ' units', Icons.inventory_2_outlined, const Color(0xFF42C99A), constraints.maxWidth),
+        _metric('RUNNING OUT', ((_metrics['lowStock'] as List<Medicine>?)?.length ?? 0).toString() + ' items', Icons.warning_amber_rounded, const Color(0xFFFFB547), constraints.maxWidth),
       ]),
       const SizedBox(height: 18),
       if (wide) Row(crossAxisAlignment: CrossAxisAlignment.start, children: [Expanded(flex: 3, child: _salesHighlights()), const SizedBox(width: 14), Expanded(flex: 2, child: _stockAlerts())])
@@ -137,7 +137,7 @@ class _StoreShellState extends State<StoreShell> {
   ]))));
 
   Widget _salesHighlights() {
-    final rows = _medicines.take(4).map((m) {
+    final rows = ((_metrics['hotSales'] as List<Medicine>?) ?? const <Medicine>[]).take(4).map((m) {
       return Padding(
         padding: const EdgeInsets.symmetric(vertical: 8),
         child: Row(children: [
@@ -152,7 +152,7 @@ class _StoreShellState extends State<StoreShell> {
   }
 
   Widget _stockAlerts() {
-    final lowStock = _medicines.where((m) => m.quantity <= m.reorderLevel + 3).toList();
+    final lowStock = (_metrics['lowStock'] as List<Medicine>?) ?? const <Medicine>[];
     return _sectionCard('RUNNING OUT', Column(children: lowStock.map((m) {
       return ListTile(
         dense: true,
@@ -259,37 +259,32 @@ class _StoreShellState extends State<StoreShell> {
     name.dispose(); email.dispose(); password.dispose();
   }
 
-  Widget _reports() => ListView(padding: const EdgeInsets.all(20), children: [
-    const Text('Sales reports', style: TextStyle(fontSize: 23, fontWeight: FontWeight.w800)), const SizedBox(height: 10),
-    Card(child: Padding(padding: const EdgeInsets.all(18), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      const Text('Today’s activity'), const SizedBox(height: 12), const Text('TZS 536,000', style: TextStyle(fontSize: 28, fontWeight: FontWeight.w900)), const Text('Total recorded sales', style: TextStyle(color: Color(0xFF9DA6C7))),
-      if (_isAdmin) const Padding(padding: EdgeInsets.only(top: 18), child: Text('Gross profit  •  TZS 124,500', style: TextStyle(color: Color(0xFF45D6A1)))),
-    ]))),
-  ]);
+  Widget _reports() => FutureBuilder<List<Map<String,Object?>>>(
+    future: _repository.salesForDay(DateTime.now()),
+    builder: (context, snapshot) {
+      final rows = snapshot.data ?? const <Map<String,Object?>>[];
+      final revenue = rows.fold<int>(0,(sum,row)=>sum + (row['quantity'] as int)*(row['unit_selling_price'] as int));
+      final profit = rows.fold<int>(0,(sum,row)=>sum + (row['quantity'] as int)*((row['unit_selling_price'] as int)-(row['unit_cost_snapshot'] as int)));
+      final units = rows.fold<int>(0,(sum,row)=>sum + (row['quantity'] as int));
+      return ListView(padding: const EdgeInsets.all(20), children: [
+        const Text('Sales reports', style: TextStyle(fontSize: 23,fontWeight: FontWeight.w800)),
+        const SizedBox(height:12),
+        Wrap(spacing:12,runSpacing:12,children:[
+          _metric('TODAY SALES','TZS $revenue',Icons.trending_up,const Color(0xFF28C6D5),MediaQuery.sizeOf(context).width),
+          if (_isAdmin) _metric('GROSS PROFIT','TZS $profit',Icons.account_balance_wallet_outlined,const Color(0xFF9B72F5),MediaQuery.sizeOf(context).width),
+          _metric('UNITS SOLD','$units',Icons.medication_outlined,const Color(0xFF42C99A),MediaQuery.sizeOf(context).width),
+        ]),
+        const SizedBox(height:16),
+        Card(child: Padding(padding:const EdgeInsets.all(16),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
+          const Text('TODAY TRANSACTIONS',style:TextStyle(fontWeight:FontWeight.bold,letterSpacing:1)),
+          if(snapshot.connectionState==ConnectionState.waiting) const LinearProgressIndicator(),
+          if(rows.isEmpty && snapshot.connectionState==ConnectionState.done) const Padding(padding:EdgeInsets.all(20),child:Text('No sales have been recorded today.')),
+          ...rows.map((row)=>ListTile(dense:true,title:Text(row['medicine_name'] as String),
+            subtitle:Text('${row['quantity']} × TZS ${row['unit_selling_price']}'),
+            trailing:Text('TZS ${(row['quantity'] as int)*(row['unit_selling_price'] as int)}'))),
+        ]))),
+      ]);
+    },
+  );
 
-  Widget _sectionCard(String title, Widget child) => Card(child: Padding(padding: const EdgeInsets.all(16), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(title, style: const TextStyle(fontSize: 11, letterSpacing: 1.4, color: Color(0xFFA9B1D0), fontWeight: FontWeight.bold)), const SizedBox(height: 12), child])));
-}
 
-class MedicineSearchDelegate extends SearchDelegate<Medicine?> {
-  MedicineSearchDelegate(this.items);
-  final List<Medicine> items;
-  @override String get searchFieldLabel => 'Search medicine name or barcode';
-  @override List<Widget>? buildActions(BuildContext context) => [IconButton(onPressed: () => query = '', icon: const Icon(Icons.clear))];
-  @override Widget? buildLeading(BuildContext context) => IconButton(onPressed: () => close(context, null), icon: const Icon(Icons.arrow_back));
-  @override Widget buildResults(BuildContext context) => _results(context);
-  @override Widget buildSuggestions(BuildContext context) => _results(context);
-  Widget _results(BuildContext context) {
-    final q = query.toLowerCase();
-    final matches = items.where((m) =>
-      m.name.toLowerCase().contains(q) || (m.barcode ?? '').contains(query)
-    ).toList();
-    return ListView(
-      children: matches.map((m) => ListTile(
-        leading: const Icon(Icons.medication_outlined),
-        title: Text(m.name),
-        subtitle: Text('TZS ' + m.sellingPrice.toString() + ' • ' + m.quantity.toString() + ' in stock'),
-        onTap: () => close(context, m),
-      )).toList(),
-    );
-  }
-}
