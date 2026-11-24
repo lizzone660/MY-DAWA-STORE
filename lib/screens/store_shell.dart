@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import '../models/medicine.dart';
+import '../services/auth_repository.dart';
 import '../services/store_repository.dart';
 import 'sales_page.dart';
+import 'auth_gate.dart';
 
 class StoreShell extends StatefulWidget {
-  const StoreShell({super.key});
+  const StoreShell({super.key, required this.user});
+  final LocalUser user;
   @override
   State<StoreShell> createState() => _StoreShellState();
 }
@@ -12,7 +15,7 @@ class StoreShell extends StatefulWidget {
 class _StoreShellState extends State<StoreShell> {
   int _index = 0;
   final _repository = StoreRepository();
-  String _actorId = 'local-admin';
+  String get _actorId => widget.user.id;
   bool _loading = true;
 
   @override
@@ -34,7 +37,7 @@ class _StoreShellState extends State<StoreShell> {
     if (!mounted) return;
     setState(() { _medicines = rows; _loading = false; });
   }
-  bool _isAdmin = true;
+  bool get _isAdmin => widget.user.isAdmin;
   List<Medicine> _medicines = [
     const Medicine(id:'m1', name:'Paracetamol 500mg', purchasePrice:300, sellingPrice:500, quantity:120),
     const Medicine(id:'m2', name:'Amoxicillin 500mg', purchasePrice:1200, sellingPrice:1800, quantity:42),
@@ -51,16 +54,14 @@ class _StoreShellState extends State<StoreShell> {
         titleSpacing: 18,
         title: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           const Text('MY DAWA STORE', style: TextStyle(fontWeight: FontWeight.w900, letterSpacing: 1.4, fontSize: 16)),
-          Text('BIOHAVEN PHARMACY  •  ' + (_isAdmin ? 'ADMIN' : 'WORKER'), style: const TextStyle(fontSize: 10, color: Color(0xFF9DA6C7), letterSpacing: 1.1)),
+          Text(widget.user.name + '  •  ' + (_isAdmin ? 'ADMIN' : 'WORKER'), style: const TextStyle(fontSize: 10, color: Color(0xFF9DA6C7), letterSpacing: 1.1)),
         ]),
         actions: [
           IconButton(tooltip: 'Search medicine', onPressed: () => showSearch(context: context, delegate: MedicineSearchDelegate(_medicines)), icon: const Icon(Icons.search, size: 27)),
           IconButton(tooltip: 'Notifications', onPressed: () {}, icon: const Icon(Icons.notifications_none)),
-          PopupMenuButton<String>(
-            icon: const Icon(Icons.account_circle_outlined),
-            onSelected: (v) => setState(() => _isAdmin = v == 'admin'),
-            itemBuilder: (_) => const [PopupMenuItem(value:'admin', child: Text('Admin workspace')), PopupMenuItem(value:'worker', child: Text('Worker workspace'))],
-          ),
+          IconButton(tooltip: 'Sign out', onPressed: () => Navigator.of(context).pushAndRemoveUntil(
+            MaterialPageRoute(builder: (_) => const AuthGate()), (route) => false),
+            icon: const Icon(Icons.logout_rounded)),
           const SizedBox(width: 8),
         ],
       ),
