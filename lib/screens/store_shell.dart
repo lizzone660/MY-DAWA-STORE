@@ -334,5 +334,76 @@ class _StoreShellState extends State<StoreShell> {
       ]);
     },
   );
+  Widget _sectionCard(String title, Widget child) => Card(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 11,
+                  letterSpacing: 1.4,
+                  color: Color(0xFFA9B1D0),
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 12),
+              child,
+            ],
+          ),
+        ),
+      );
+}
 
+class MedicineSearchDelegate extends SearchDelegate<Medicine?> {
+  MedicineSearchDelegate(this.items);
+  final List<Medicine> items;
 
+  @override
+  String get searchFieldLabel => 'Search medicine name or barcode';
+
+  @override
+  List<Widget>? buildActions(BuildContext context) => [
+        IconButton(
+          onPressed: () => query = '',
+          icon: const Icon(Icons.clear),
+        ),
+      ];
+
+  @override
+  Widget? buildLeading(BuildContext context) => IconButton(
+        onPressed: () => close(context, null),
+        icon: const Icon(Icons.arrow_back),
+      );
+
+  @override
+  Widget buildResults(BuildContext context) => _results(context);
+
+  @override
+  Widget buildSuggestions(BuildContext context) => _results(context);
+
+  Widget _results(BuildContext context) {
+    final q = query.toLowerCase();
+    final matches = items
+        .where((medicine) =>
+            medicine.name.toLowerCase().contains(q) ||
+            (medicine.barcode ?? '').contains(query))
+        .toList();
+    return ListView(
+      children: matches
+          .map(
+            (medicine) => ListTile(
+              leading: const Icon(Icons.medication_outlined),
+              title: Text(medicine.name),
+              subtitle: Text(
+                'TZS ${medicine.sellingPrice} • ${medicine.quantity} in stock',
+              ),
+              onTap: () => close(context, medicine),
+            ),
+          )
+          .toList(),
+    );
+  }
+}
