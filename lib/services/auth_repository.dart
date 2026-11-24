@@ -33,7 +33,9 @@ class AuthRepository {
     required String password, required String gender, required String reportEmail,
     required String openingTime, required String closingTime,
   }) async {
-    if (storeName.trim().isEmpty || ownerName.trim().isEmpty || !_validEmail(email) || password.length < 10 ||\n        !_validTime(openingTime) || !_validTime(closingTime) ||\n        (reportEmail.trim().isNotEmpty && !_validEmail(reportEmail))) {
+    if (storeName.trim().isEmpty || ownerName.trim().isEmpty || !_validEmail(email) || password.length < 10 ||
+        !_validTime(openingTime) || !_validTime(closingTime) ||
+        (reportEmail.trim().isNotEmpty && !_validEmail(reportEmail))) {
       throw ArgumentError('Provide valid store/owner details, email, password (10+ characters), and HH:mm opening/closing times.');
     }
     final db = await _database.database;
@@ -74,6 +76,10 @@ class AuthRepository {
     final db = await _database.database;
     final salt = List<int>.generate(16, (_) => Random.secure().nextInt(256));
     await db.transaction((txn) async {
+      final actor = await txn.query('store_users', columns: ['role','is_active'], where: 'id = ?', whereArgs: [actorId], limit: 1);
+      if (actor.isEmpty || actor.first['role'] != 'admin' || actor.first['is_active'] != 1) {
+        throw StateError('Only an active administrator can create worker accounts.');
+      }
       await txn.insert('store_users', {
         'id': _uuid.v4(), 'display_name': name.trim(), 'email': email.trim().toLowerCase(),
         'gender': 'unspecified', 'role': 'worker', 'password_salt': base64Encode(salt),
@@ -100,5 +106,10 @@ class AuthRepository {
     return rows.first.map((key, value) => MapEntry(key, value?.toString() ?? ''));
   }
 
-  bool _validEmail(String value) => RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$').hasMatch(value.trim());
+  bool _validEmail(String value) => RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+
+}
+).hasMatch(value.trim());
+  bool _validTime(String value) => RegExp(r'^(?:[01]\d|2[0-3]):[0-5]\d
+}
+).hasMatch(value.trim());
 }
