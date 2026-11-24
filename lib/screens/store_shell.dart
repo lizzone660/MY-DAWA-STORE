@@ -80,7 +80,7 @@ class _StoreShellState extends State<StoreShell> {
         Expanded(child: IndexedStack(index: _index, children: pages)),
       ]),
       bottomNavigationBar: MediaQuery.sizeOf(context).width < 760
-          ? NavigationBar(selectedIndex: _index, onDestinationSelected: (v) => setState(() => _index = v), destinations: const [
+          ? NavigationBar(selectedIndex: _index == 5 ? 4 : _index, onDestinationSelected: (v) => setState(() => _index = v == 4 ? 5 : v), destinations: const [
               NavigationDestination(icon: Icon(Icons.grid_view_rounded), label: 'Home'),
               NavigationDestination(icon: Icon(Icons.point_of_sale), label: 'Sell'),
               NavigationDestination(icon: Icon(Icons.medication_outlined), label: 'Stock'),
