@@ -55,7 +55,7 @@ class DailyClosingService {
           'date': dateKey,
           'revenue': totals['revenue'] ?? 0,
           'grossProfit': totals['grossProfit'] ?? 0,
-          'unitsSold': totals['units'] ?? 0,
+          'unitsSold': totals['units'] ?? 0,\n          'reportEmail': (profile.first['report_email'] as String?) ?? '',\n          'storeName': (profile.first['store_name'] as String?) ?? 'MY DAWA STORE',
         }),
         'created_at': closedAt,
       });

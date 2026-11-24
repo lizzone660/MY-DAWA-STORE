@@ -5,6 +5,7 @@ import '../services/store_repository.dart';
 import 'sales_page.dart';
 import 'auth_gate.dart';
 import '../services/daily_closing_service.dart';
+import '../services/weekly_stock_alert_service.dart';
 import 'dart:async';
 
 class StoreShell extends StatefulWidget {
@@ -20,6 +21,7 @@ class _StoreShellState extends State<StoreShell> {
   final _authRepository = AuthRepository();
   String _storeName = 'MY DAWA STORE';
   final _closingService = DailyClosingService();
+  final _weeklyAlerts = WeeklyStockAlertService();
   Timer? _closingTimer;
   String get _actorId => widget.user.id;
   bool _loading = true;\n  Map<String, Object> _metrics = {};
@@ -28,7 +30,7 @@ class _StoreShellState extends State<StoreShell> {
   void initState() {
     super.initState();
     _initializeLocalStore();
-    _closingTimer = Timer.periodic(const Duration(minutes: 1), (_) => _closingService.closeIfDue());
+    _closingTimer = Timer.periodic(const Duration(minutes: 1), (_) async { await _closingService.closePreviousDay(); await _closingService.closeIfDue(); await _weeklyAlerts.queueIfDue(); });
   }
 
   @override
@@ -37,6 +39,7 @@ class _StoreShellState extends State<StoreShell> {
   Future<void> _initializeLocalStore() async {
     await _closingService.closePreviousDay();
     await _closingService.closeIfDue();
+    await _weeklyAlerts.queueIfDue();
     final profile = await _authRepository.storeProfile();
     if (mounted && profile['store_name'] != null) setState(() => _storeName = profile['store_name']!);
     await _refreshMedicines();
@@ -115,6 +118,8 @@ class _StoreShellState extends State<StoreShell> {
       if (wide) Row(crossAxisAlignment: CrossAxisAlignment.start, children: [Expanded(flex: 3, child: _salesHighlights()), const SizedBox(width: 14), Expanded(flex: 2, child: _stockAlerts())])
       else ...[_salesHighlights(), const SizedBox(height: 14), _stockAlerts()],
       const SizedBox(height: 16),
+      _stockIntelligence(),
+      const SizedBox(height: 16),
       _sectionCard('QUICK ACTIONS', Wrap(spacing: 10, runSpacing: 10, children: [
         FilledButton.icon(onPressed: () => setState(() => _index = 1), icon: const Icon(Icons.search), label: const Text('Find & sell medicine')),
         if (_isAdmin) OutlinedButton.icon(onPressed: () => setState(() => _index = 2), icon: const Icon(Icons.add_box_outlined), label: const Text('Add new stock')),
@@ -154,6 +159,24 @@ class _StoreShellState extends State<StoreShell> {
       );
     }).toList()));
   }
+  Widget _stockIntelligence() {
+    final groups = <String, List<Medicine>>{
+      'HOT SELLS': (_metrics['hotSales'] as List<Medicine>?) ?? [],
+      'MEDIUM SELLS': (_metrics['mediumSales'] as List<Medicine>?) ?? [],
+      'SLOW SELLS': (_metrics['slowSales'] as List<Medicine>?) ?? [],
+      'NOT MOVING (30 DAYS)': (_metrics['dormant'] as List<Medicine>?) ?? [],
+    };
+    return Wrap(spacing:12,runSpacing:12,children:groups.entries.map((entry) => SizedBox(
+      width:MediaQuery.sizeOf(context).width > 1000 ? 260 : MediaQuery.sizeOf(context).width > 650 ? 300 : double.infinity,
+      child:_sectionCard(entry.key,entry.value.isEmpty
+        ? const Text('No matching medicines yet.',style:TextStyle(color:Color(0xFF929BB9),fontSize:12))
+        : Column(children:entry.value.take(5).map((m)=>ListTile(
+          dense:true,contentPadding:EdgeInsets.zero,title:Text(m.name,style:const TextStyle(fontSize:12)),
+          subtitle:Text('${m.quantity} units remaining',style:const TextStyle(fontSize:11,color:Color(0xFF929BB9))),
+        )).toList()),
+    )).toList());
+  }
+
   Widget _inventory() => ListView(padding: const EdgeInsets.all(20), children: [
     Row(children: [
       const Expanded(child: Text('Medicine inventory', style: TextStyle(fontSize: 23, fontWeight: FontWeight.w800))),
