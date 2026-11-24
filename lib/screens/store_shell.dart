@@ -63,13 +63,13 @@ class _StoreShellState extends State<StoreShell> {
     return Scaffold(
       appBar: AppBar(
         flexibleSpace: const DecoratedBox(decoration: BoxDecoration(
-          gradient: LinearGradient(colors: [Color(0xFF063D3B), Color(0xFF123A5A), Color(0xFF33245D)]),
+          gradient: LinearGradient(colors: [Color(0xFF071B4B), Color(0xFF0756B8), Color(0xFF063A78)]),
         )),
         backgroundColor: Colors.transparent,
         titleSpacing: 18,
         title: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Text(_storeName.toUpperCase(), style: TextStyle(fontWeight: FontWeight.w900, letterSpacing: 1.4, fontSize: 16)),
-          Text(widget.user.name + '  •  ' + (_isAdmin ? 'ADMIN' : 'WORKER'), style: const TextStyle(fontSize: 10, color: Color(0xFF9DA6C7), letterSpacing: 1.1)),
+          Text(widget.user.name + '  •  ' + (_isAdmin ? 'ADMIN' : 'WORKER'), style: const TextStyle(fontSize: 10, color: Color(0xFF9BBDE6), letterSpacing: 1.1)),
         ]),
         actions: [
           IconButton(tooltip: 'Search medicine', onPressed: () => showSearch(context: context, delegate: MedicineSearchDelegate(_medicines)), icon: const Icon(Icons.search, size: 27)),
@@ -87,7 +87,7 @@ class _StoreShellState extends State<StoreShell> {
         decoration: const BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topLeft, end: Alignment.bottomRight,
-            colors: [Color(0xFF071D22), Color(0xFF0B2430), Color(0xFF10172B)],
+            colors: [Color(0xFF06142F), Color(0xFF082B5A), Color(0xFF061B3A)],
           ),
         ),
         child: _loading ? const Center(child: CircularProgressIndicator()) : Row(children: [
@@ -106,22 +106,22 @@ class _StoreShellState extends State<StoreShell> {
     );
   }
 
-  Widget _sidebar() => Container(width: 220, decoration: const BoxDecoration(color: Color(0xFF101323), border: Border(right: BorderSide(color: Color(0xFF292D45)))), child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+  Widget _sidebar() => Container(width: 220, decoration: const BoxDecoration(color: Color(0xFF071A3B), border: Border(right: BorderSide(color: Color(0xFF174B91)))), child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
     const SizedBox(height: 22),
-    const Padding(padding: EdgeInsets.symmetric(horizontal: 18), child: Text('WORKSPACE', style: TextStyle(color: Color(0xFF77809F), fontSize: 10, letterSpacing: 2, fontWeight: FontWeight.bold))),
+    const Padding(padding: EdgeInsets.symmetric(horizontal: 18), child: Text('WORKSPACE', style: TextStyle(color: Color(0xFF79A7E3), fontSize: 10, letterSpacing: 2, fontWeight: FontWeight.bold))),
     const SizedBox(height: 12),
     _nav(Icons.dashboard_outlined, 'Dashboard', 0), _nav(Icons.point_of_sale, 'Sales center', 1), _nav(Icons.medication_outlined, 'Medicine stock', 2), _nav(Icons.bar_chart_rounded, 'Reports', 3),
     _nav(Icons.apps_outlined, 'All modules', 5),
     _nav(Icons.notifications_outlined, 'Notifications', 6),
     if (_isAdmin) ...[
-      const Padding(padding: EdgeInsets.fromLTRB(18, 24, 18, 10), child: Text('ADMINISTRATION', style: TextStyle(color: Color(0xFF77809F), fontSize: 10, letterSpacing: 2, fontWeight: FontWeight.bold))),
+      const Padding(padding: EdgeInsets.fromLTRB(18, 24, 18, 10), child: Text('ADMINISTRATION', style: TextStyle(color: Color(0xFF79A7E3), fontSize: 10, letterSpacing: 2, fontWeight: FontWeight.bold))),
       _nav(Icons.people_outline, 'Workers', 4),
     ],
     const Spacer(),
     const Padding(padding: EdgeInsets.all(16), child: Text('OFFLINE MODE READY\nLocal-first workspace', style: TextStyle(color: Color(0xFF7D87A8), fontSize: 11, height: 1.6))),
   ]));
 
-  Widget _nav(IconData icon, String label, int index, {bool enabled = true}) => ListTile(dense: true, enabled: enabled, selected: _index == index, selectedTileColor: const Color(0xFF292044), leading: Icon(icon, size: 19, color: _index == index ? const Color(0xFFB69AFF) : const Color(0xFF8992B2)), title: Text(label, style: const TextStyle(fontSize: 13)), onTap: enabled ? () => setState(() => _index = index) : null);
+  Widget _nav(IconData icon, String label, int index, {bool enabled = true}) => ListTile(dense: true, enabled: enabled, selected: _index == index, selectedTileColor: const Color(0xFF103D82), leading: Icon(icon, size: 19, color: _index == index ? const Color(0xFF62D9FF) : const Color(0xFF91B7E8)), title: Text(label, style: const TextStyle(fontSize: 13)), onTap: enabled ? () => setState(() => _index = index) : null);
 
   Widget _lockedAdmin() => const Center(child: Text('This section is available to administrators only.'));
 
@@ -129,12 +129,12 @@ class _StoreShellState extends State<StoreShell> {
     final wide = constraints.maxWidth > 850;
     return SingleChildScrollView(padding: const EdgeInsets.all(20), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       const Text('Pharmacy overview', style: TextStyle(fontSize: 23, fontWeight: FontWeight.w800)),
-      const SizedBox(height: 5), const Text('Your store at a glance • Offline data', style: TextStyle(color: Color(0xFF929BB9))),
+      const SizedBox(height: 5), const Text('Your store at a glance • Offline data', style: TextStyle(color: Color(0xFFA8C5EA))),
       const SizedBox(height: 20),
       Wrap(spacing: 12, runSpacing: 12, children: [
-        _metric('TODAY’S SALES', 'TZS ' + (_metrics['revenue'] ?? 0).toString(), Icons.trending_up, const Color(0xFF28C6D5), constraints.maxWidth),
-        if (_isAdmin) _metric('TODAY’S PROFIT', 'TZS ' + (_metrics['profit'] ?? 0).toString(), Icons.account_balance_wallet_outlined, const Color(0xFF9B72F5), constraints.maxWidth),
-        _metric('TOTAL STOCK', (_metrics['stockUnits'] ?? 0).toString() + ' units', Icons.inventory_2_outlined, const Color(0xFF42C99A), constraints.maxWidth),
+        _metric('TODAY’S SALES', 'TZS ' + (_metrics['revenue'] ?? 0).toString(), Icons.trending_up, const Color(0xFF31C8FF), constraints.maxWidth),
+        if (_isAdmin) _metric('TODAY’S PROFIT', 'TZS ' + (_metrics['profit'] ?? 0).toString(), Icons.account_balance_wallet_outlined, const Color(0xFF35B8F4), constraints.maxWidth),
+        _metric('TOTAL STOCK', (_metrics['stockUnits'] ?? 0).toString() + ' units', Icons.inventory_2_outlined, const Color(0xFF35A9FF), constraints.maxWidth),
         _metric('RUNNING OUT', ((_metrics['lowStock'] as List<Medicine>?)?.length ?? 0).toString() + ' items', Icons.warning_amber_rounded, const Color(0xFFFFB547), constraints.maxWidth),
       ]),
       const SizedBox(height: 18),
@@ -152,7 +152,7 @@ class _StoreShellState extends State<StoreShell> {
 
   Widget _metric(String label, String value, IconData icon, Color color, double width) => SizedBox(width: width > 1100 ? (width - 60) / 4 : width > 650 ? (width - 36) / 2 : width - 40, child: Card(child: Padding(padding: const EdgeInsets.all(16), child: Row(children: [
     Container(padding: const EdgeInsets.all(11), decoration: BoxDecoration(color: color.withValues(alpha: .15), borderRadius: BorderRadius.circular(13)), child: Icon(icon, color: color)),
-    const SizedBox(width: 12), Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(label, style: const TextStyle(fontSize: 10, color: Color(0xFF9DA6C7), letterSpacing: 1)), const SizedBox(height: 7), Text(value, style: const TextStyle(fontSize: 19, fontWeight: FontWeight.w800), overflow: TextOverflow.ellipsis)])),
+    const SizedBox(width: 12), Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(label, style: const TextStyle(fontSize: 10, color: Color(0xFF9BBDE6), letterSpacing: 1)), const SizedBox(height: 7), Text(value, style: const TextStyle(fontSize: 19, fontWeight: FontWeight.w800), overflow: TextOverflow.ellipsis)])),
   ]))));
 
   Widget _salesHighlights() {
@@ -160,10 +160,10 @@ class _StoreShellState extends State<StoreShell> {
       return Padding(
         padding: const EdgeInsets.symmetric(vertical: 8),
         child: Row(children: [
-          const Icon(Icons.medication, color: Color(0xFF9C7BFA), size: 19),
+          const Icon(Icons.medication, color: Color(0xFF49C8FF), size: 19),
           const SizedBox(width: 10),
           Expanded(child: Text(m.name, style: const TextStyle(fontSize: 13))),
-          Text(m.quantity.toString() + ' left', style: const TextStyle(color: Color(0xFF9DA6C7), fontSize: 12)),
+          Text(m.quantity.toString() + ' left', style: const TextStyle(color: Color(0xFF9BBDE6), fontSize: 12)),
         ]),
       );
     }).toList();
@@ -205,7 +205,7 @@ class _StoreShellState extends State<StoreShell> {
               entry.value.isEmpty
                   ? const Text(
                       'No matching medicines yet.',
-                      style: TextStyle(color: Color(0xFF929BB9), fontSize: 12),
+                      style: TextStyle(color: Color(0xFFA8C5EA), fontSize: 12),
                     )
                   : Column(
                       children: [
@@ -221,7 +221,7 @@ class _StoreShellState extends State<StoreShell> {
                               '${medicine.quantity} units remaining',
                               style: const TextStyle(
                                 fontSize: 11,
-                                color: Color(0xFF929BB9),
+                                color: Color(0xFFA8C5EA),
                               ),
                             ),
                           ),
@@ -240,7 +240,7 @@ class _StoreShellState extends State<StoreShell> {
     ]),
     const SizedBox(height: 16),
     ..._medicines.map((m) => Card(child: ListTile(
-      leading: const CircleAvatar(backgroundColor: Color(0xFF292044), child: Icon(Icons.medication, color: Color(0xFFB69AFF))),
+      leading: const CircleAvatar(backgroundColor: Color(0xFF103D82), child: Icon(Icons.medication, color: Color(0xFF62D9FF))),
       title: Text(m.name),
       subtitle: Text('Selling: TZS ' + m.sellingPrice.toString() + '  •  Stock: ' + m.quantity.toString()),
       trailing: _isAdmin ? IconButton(icon: const Icon(Icons.edit_outlined), onPressed: () => _editMedicine(m)) : const Icon(Icons.lock_outline),
@@ -298,7 +298,7 @@ class _StoreShellState extends State<StoreShell> {
       FilledButton.icon(onPressed: _addWorker, icon: const Icon(Icons.person_add_alt_1), label: const Text('Add worker')),
     ]),
     const SizedBox(height: 10),
-    const Text('Create individual local sign-in accounts. Each device must be enrolled separately until cloud synchronization is configured.', style: TextStyle(color: Color(0xFF929BB9), fontSize: 12)),
+    const Text('Create individual local sign-in accounts. Each device must be enrolled separately until cloud synchronization is configured.', style: TextStyle(color: Color(0xFFA8C5EA), fontSize: 12)),
   ]);
 
   Future<void> _addWorker() async {
@@ -340,9 +340,9 @@ class _StoreShellState extends State<StoreShell> {
         const Text('Sales reports', style: TextStyle(fontSize: 23,fontWeight: FontWeight.w800)),
         const SizedBox(height:12),
         Wrap(spacing:12,runSpacing:12,children:[
-          _metric('TODAY SALES','TZS $revenue',Icons.trending_up,const Color(0xFF28C6D5),MediaQuery.sizeOf(context).width),
-          if (_isAdmin) _metric('GROSS PROFIT','TZS $profit',Icons.account_balance_wallet_outlined,const Color(0xFF9B72F5),MediaQuery.sizeOf(context).width),
-          _metric('UNITS SOLD','$units',Icons.medication_outlined,const Color(0xFF42C99A),MediaQuery.sizeOf(context).width),
+          _metric('TODAY SALES','TZS $revenue',Icons.trending_up,const Color(0xFF31C8FF),MediaQuery.sizeOf(context).width),
+          if (_isAdmin) _metric('GROSS PROFIT','TZS $profit',Icons.account_balance_wallet_outlined,const Color(0xFF35B8F4),MediaQuery.sizeOf(context).width),
+          _metric('UNITS SOLD','$units',Icons.medication_outlined,const Color(0xFF35A9FF),MediaQuery.sizeOf(context).width),
         ]),
         const SizedBox(height:16),
         Card(child: Padding(padding:const EdgeInsets.all(16),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[

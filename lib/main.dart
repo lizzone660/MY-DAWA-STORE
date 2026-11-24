@@ -19,7 +19,7 @@ class MyDawaStoreApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const seed = Color(0xFF00BFA6);
+    const seed = Color(0xFF1677FF);
     return MaterialApp(
       title: 'MY DAWA STORE',
       debugShowCheckedModeBanner: false,
@@ -29,27 +29,27 @@ class MyDawaStoreApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(
           seedColor: seed,
           brightness: Brightness.dark,
-          surface: const Color(0xFF10252B),
+          surface: const Color(0xFF0B2450),
         ),
-        scaffoldBackgroundColor: const Color(0xFF071A20),
+        scaffoldBackgroundColor: const Color(0xFF06142F),
         cardTheme: CardThemeData(
-          color: const Color(0xFF10272D),
+          color: const Color(0xFF0B2450),
           elevation: 0,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(18),
-            side: const BorderSide(color: Color(0xFF1D5B5B)),
+            side: const BorderSide(color: Color(0xFF174B91)),
           ),
         ),
         inputDecorationTheme: InputDecorationTheme(
           filled: true,
-          fillColor: const Color(0xFF123238),
+          fillColor: const Color(0xFF102F60),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(13),
-            borderSide: const BorderSide(color: Color(0xFF343852)),
+            borderSide: const BorderSide(color: Color(0xFF285A9B)),
           ),
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(13),
-            borderSide: const BorderSide(color: Color(0xFF343852)),
+            borderSide: const BorderSide(color: Color(0xFF285A9B)),
           ),
         ),
       ),
