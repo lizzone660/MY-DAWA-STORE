@@ -4,6 +4,8 @@ import '../services/auth_repository.dart';
 import '../services/store_repository.dart';
 import 'sales_page.dart';
 import 'auth_gate.dart';
+import '../services/daily_closing_service.dart';
+import 'dart:async';
 
 class StoreShell extends StatefulWidget {
   const StoreShell({super.key, required this.user});
@@ -17,6 +19,8 @@ class _StoreShellState extends State<StoreShell> {
   final _repository = StoreRepository();
   final _authRepository = AuthRepository();
   String _storeName = 'MY DAWA STORE';
+  final _closingService = DailyClosingService();
+  Timer? _closingTimer;
   String get _actorId => widget.user.id;
   bool _loading = true;
 
@@ -24,13 +28,19 @@ class _StoreShellState extends State<StoreShell> {
   void initState() {
     super.initState();
     _initializeLocalStore();
+    _closingTimer = Timer.periodic(const Duration(minutes: 1), (_) => _closingService.closeIfDue());
   }
+
+  @override
+  void dispose() { _closingTimer?.cancel(); super.dispose(); }
 
   Future<void> _initializeLocalStore() async {
     final existing = await _repository.medicines();
     if (existing.isEmpty) {
       for (final medicine in _medicines) { await _repository.saveMedicine(medicine); }
     }
+    await _closingService.closePreviousDay();
+    await _closingService.closeIfDue();
     final profile = await _authRepository.storeProfile();
     if (mounted && profile['store_name'] != null) setState(() => _storeName = profile['store_name']!);
     await _refreshMedicines();
