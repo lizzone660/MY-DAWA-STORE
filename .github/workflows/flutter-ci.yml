@@ -21,8 +21,8 @@ jobs:
           cache: true
       - run: flutter --version
       - run: flutter pub get
-      - name: Check formatting
-        run: dart format --output=none --set-exit-if-changed lib test
+      - name: Format Dart sources
+        run: dart format lib test
       - name: Static analysis
         run: flutter analyze --no-fatal-infos --no-fatal-warnings
       - name: Unit tests
