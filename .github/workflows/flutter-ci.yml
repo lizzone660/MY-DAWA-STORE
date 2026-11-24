@@ -49,16 +49,18 @@ jobs:
           from pathlib import Path
           p = Path("android/app/build.gradle.kts")
           s = p.read_text()
-          marker = "android {"
-          props = '''val keystoreProperties = java.util.Properties()
+          props = '''import java.util.Properties
+          import java.io.FileInputStream
+
+          val keystoreProperties = Properties()
           val keystorePropertiesFile = rootProject.file("key.properties")
           if (keystorePropertiesFile.exists()) {
-              keystoreProperties.load(java.io.FileInputStream(keystorePropertiesFile))
+              keystoreProperties.load(FileInputStream(keystorePropertiesFile))
           }
 
           '''
           if "val keystoreProperties =" not in s:
-              s = s.replace(marker, props + marker, 1)
+              s = s.replace("android {", props + "android {", 1)
           signing = '''    signingConfigs {
                   create("release") {
                       keyAlias = keystoreProperties["keyAlias"] as String
