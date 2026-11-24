@@ -128,9 +128,63 @@ class _StoreShellState extends State<StoreShell> {
   Widget _stockAlerts() => _sectionCard('RUNNING OUT', Column(children: _medicines.where((m) => m.quantity <= m.reorderLevel + 3).map((m) => ListTile(dense: true, contentPadding: EdgeInsets.zero, leading: const Icon(Icons.warning_amber_rounded, color: Color(0xFFFFB547)), title: Text(m.name, style: const TextStyle(fontSize: 12)), subtitle: Text(m.quantity.toString() + ' units remaining', style: const TextStyle(fontSize: 11))).toList()));
 
   Widget _inventory() => ListView(padding: const EdgeInsets.all(20), children: [
-    const Text('Medicine inventory', style: TextStyle(fontSize: 23, fontWeight: FontWeight.w800)), const SizedBox(height: 16),
-    ..._medicines.map((m) => Card(child: ListTile(leading: const CircleAvatar(backgroundColor: Color(0xFF292044), child: Icon(Icons.medication, color: Color(0xFFB69AFF))), title: Text(m.name), subtitle: Text('Selling: TZS ' + m.sellingPrice.toString() + '  •  Stock: ' + m.quantity.toString()), trailing: _isAdmin ? IconButton(icon: const Icon(Icons.edit_outlined), onPressed: () {}) : const Icon(Icons.lock_outline))),
+    Row(children: [
+      const Expanded(child: Text('Medicine inventory', style: TextStyle(fontSize: 23, fontWeight: FontWeight.w800))),
+      if (_isAdmin) FilledButton.icon(onPressed: () => _editMedicine(), icon: const Icon(Icons.add), label: const Text('Add stock')),
+    ]),
+    const SizedBox(height: 16),
+    ..._medicines.map((m) => Card(child: ListTile(
+      leading: const CircleAvatar(backgroundColor: Color(0xFF292044), child: Icon(Icons.medication, color: Color(0xFFB69AFF))),
+      title: Text(m.name),
+      subtitle: Text('Selling: TZS ' + m.sellingPrice.toString() + '  •  Stock: ' + m.quantity.toString()),
+      trailing: _isAdmin ? IconButton(icon: const Icon(Icons.edit_outlined), onPressed: () => _editMedicine(m)) : const Icon(Icons.lock_outline),
+    ))),
   ]);
+
+  Future<void> _editMedicine([Medicine? existing]) async {
+    if (!_isAdmin) return;
+    final name = TextEditingController(text: existing?.name ?? '');
+    final cost = TextEditingController(text: existing?.purchasePrice.toString() ?? '');
+    final price = TextEditingController(text: existing?.sellingPrice.toString() ?? '');
+    final qty = TextEditingController(text: existing?.quantity.toString() ?? '0');
+    final barcode = TextEditingController(text: existing?.barcode ?? '');
+    final reorder = TextEditingController(text: existing?.reorderLevel.toString() ?? '5');
+    final result = await showDialog<bool>(context: context, builder: (dialogContext) => AlertDialog(
+      title: Text(existing == null ? 'Add new stock' : 'Edit medicine'),
+      content: SizedBox(width: 440, child: SingleChildScrollView(child: Column(mainAxisSize: MainAxisSize.min, children: [
+        TextField(controller: name, decoration: const InputDecoration(labelText: 'Medicine name')),
+        TextField(controller: cost, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'Purchase price (TZS)')),
+        TextField(controller: price, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'Selling price (TZS)')),
+        TextField(controller: qty, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'Quantity in stock')),
+        TextField(controller: barcode, decoration: const InputDecoration(labelText: 'Barcode (optional)')),
+        TextField(controller: reorder, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'Low-stock alert level')),
+      ]))),
+      actions: [
+        TextButton(onPressed: () => Navigator.pop(dialogContext, false), child: const Text('Cancel')),
+        FilledButton(onPressed: () => Navigator.pop(dialogContext, true), child: const Text('Save medicine')),
+      ],
+    ));
+    if (result == true) {
+      final n = name.text.trim();
+      final c = int.tryParse(cost.text.trim());
+      final p = int.tryParse(price.text.trim());
+      final q = int.tryParse(qty.text.trim());
+      final r = int.tryParse(reorder.text.trim());
+      if (n.isEmpty || c == null || p == null || q == null || r == null || c < 0 || p < 0 || q < 0 || r < 0) {
+        if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Enter a name and valid non-negative whole-number amounts.')));
+      } else {
+        final medicine = Medicine(
+          id: existing?.id ?? DateTime.now().microsecondsSinceEpoch.toString(),
+          name: n, purchasePrice: c, sellingPrice: p, quantity: q,
+          barcode: barcode.text.trim().isEmpty ? null : barcode.text.trim(),
+          reorderLevel: r,
+        );
+        await _repository.saveMedicine(medicine);
+        await _refreshMedicines();
+      }
+    }
+    name.dispose(); cost.dispose(); price.dispose(); qty.dispose(); barcode.dispose(); reorder.dispose();
+  }
 
   Widget _reports() => ListView(padding: const EdgeInsets.all(20), children: [
     const Text('Sales reports', style: TextStyle(fontSize: 23, fontWeight: FontWeight.w800)), const SizedBox(height: 10),
