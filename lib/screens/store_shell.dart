@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/medicine.dart';
+import '../services/store_repository.dart';
 import 'sales_page.dart';
 
 class StoreShell extends StatefulWidget {
@@ -10,8 +11,31 @@ class StoreShell extends StatefulWidget {
 
 class _StoreShellState extends State<StoreShell> {
   int _index = 0;
+  final _repository = StoreRepository();
+  String _actorId = 'local-admin';
+  bool _loading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _initializeLocalStore();
+  }
+
+  Future<void> _initializeLocalStore() async {
+    final existing = await _repository.medicines();
+    if (existing.isEmpty) {
+      for (final medicine in _medicines) { await _repository.saveMedicine(medicine); }
+    }
+    await _refreshMedicines();
+  }
+
+  Future<void> _refreshMedicines() async {
+    final rows = await _repository.medicines();
+    if (!mounted) return;
+    setState(() { _medicines = rows; _loading = false; });
+  }
   bool _isAdmin = true;
-  final List<Medicine> _medicines = [
+  List<Medicine> _medicines = [
     const Medicine(id:'m1', name:'Paracetamol 500mg', purchasePrice:300, sellingPrice:500, quantity:120),
     const Medicine(id:'m2', name:'Amoxicillin 500mg', purchasePrice:1200, sellingPrice:1800, quantity:42),
     const Medicine(id:'m3', name:'ORS Sachets', purchasePrice:450, sellingPrice:700, quantity:68),
@@ -21,7 +45,7 @@ class _StoreShellState extends State<StoreShell> {
 
   @override
   Widget build(BuildContext context) {
-    final pages = [_dashboard(), SalesPage(medicines: _medicines, isAdmin: _isAdmin), _inventory(), _reports()];
+    final pages = [_dashboard(), SalesPage(medicines: _medicines, isAdmin: _isAdmin, actorId: _actorId, onSaleRecorded: _refreshMedicines), _inventory(), _reports()];
     return Scaffold(
       appBar: AppBar(
         titleSpacing: 18,
@@ -40,7 +64,7 @@ class _StoreShellState extends State<StoreShell> {
           const SizedBox(width: 8),
         ],
       ),
-      body: Row(children: [
+      body: _loading ? const Center(child: CircularProgressIndicator()) : Row(children: [
         if (MediaQuery.sizeOf(context).width >= 760) _sidebar(),
         Expanded(child: IndexedStack(index: _index, children: pages)),
       ]),

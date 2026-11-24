@@ -1,10 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:uuid/uuid.dart';
 import '../models/medicine.dart';
+import '../models/sale.dart';
+import '../services/store_repository.dart';
 
 class SalesPage extends StatefulWidget {
-  const SalesPage({super.key, required this.medicines, required this.isAdmin});
+  const SalesPage({super.key, required this.medicines, required this.isAdmin, required this.actorId, required this.onSaleRecorded});
   final List<Medicine> medicines;
   final bool isAdmin;
+  final String actorId;
+  final VoidCallback onSaleRecorded;
   @override State<SalesPage> createState() => _SalesPageState();
 }
 
@@ -12,6 +17,8 @@ class _SalesPageState extends State<SalesPage> {
   final _search = TextEditingController();
   final _searchFocus = FocusNode();
   final List<_CartLine> _cart = [];
+  final _repository = StoreRepository();
+  static const _uuid = Uuid();
   String _money(int value) => 'TZS ' + value.toString();
 
   List<Medicine> get _matches {
@@ -85,8 +92,27 @@ class _SalesPageState extends State<SalesPage> {
     if (invalid) { ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Sale cannot be completed: check stock and price.'))); return; }
     final total = _total;
     final count = _cart.length;
-    setState(() => _cart.clear());
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Sale draft confirmed: ' + count.toString() + ' medicine types • ' + _money(total) + '. Persistent transaction integration is next.')));
+    final now = DateTime.now();
+    final saleLines = _cart.map((line) => Sale(
+      id: _uuid.v4(),
+      medicineId: line.medicine.id,
+      medicineName: line.medicine.name,
+      quantity: line.quantity,
+      unitSellingPrice: line.unitPrice,
+      unitCostSnapshot: line.medicine.purchasePrice,
+      soldAt: now,
+      workerId: widget.actorId,
+    )).toList();
+    try {
+      await _repository.recordSale(lines: saleLines, actorId: widget.actorId);
+      if (!mounted) return;
+      setState(() => _cart.clear());
+      widget.onSaleRecorded();
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Sale saved offline: ' + count.toString() + ' medicine types • ' + _money(total))));
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Sale not saved: ' + error.toString())));
+    }
   }
 }
 
