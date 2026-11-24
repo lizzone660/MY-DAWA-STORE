@@ -1,41 +1,48 @@
 # Implementation status
 
-## Implemented in repository
+## Verified in repository
+
 - Flutter application foundation and responsive dark pharmacy dashboard.
-- Desktop sidebar and mobile bottom navigation.
-- Medicine search by name or barcode in the app bar and sales center.
-- Quick-sale cart with quantity controls and live TZS totals.
-- Sales screen now submits sale lines to the SQLite repository.
-- SQLite sale posting checks stock and deducts inventory atomically in one transaction.
-- Sale-time purchase-cost snapshots preserve historical gross-profit calculations.
-- Inventory list reads from SQLite; admin UI has add/edit medicine forms.
-- New local database is initialized with demo catalogue data only when empty.
-- GitHub Actions workflow added for formatting, static analysis and Flutter tests.
-- Basic accounting unit tests added.
+- Local SQLite database and local owner/worker sign-in flow.
+- Clean database creation does not insert demo medicines or demo sales.
+- Medicine search by name or barcode text.
+- Sales cart and sale persistence.
+- Stock deduction and sale insertion run in one SQLite transaction.
+- Sale-time purchase-cost snapshots support historical gross-profit calculations.
+- Dashboard and daily sales list read local database totals.
+- Daily closing and weekly alert services enqueue local outbox records; this is not proof of email delivery.
+- GitHub Actions checks formatting, runs static analysis and unit tests, and builds an Android release APK artifact.
 
-## Important limitations — not production-ready
-- Current role selector is a development/demo switch, not authentication. Do not deploy with real worker accounts until secure registration, login, session handling and authorization are implemented.
-- Admin-only controls are currently UI-gated, not protected by a verified identity boundary.
-- The current seed medicines are demonstration data and must be removed/replaced before store onboarding.
-- Dashboard KPIs and reports still contain sample figures; daily reports are not yet connected to real sales.
-- Daily closing, schedule recovery, email delivery, weekly reorder email and store hours are not implemented.
-- No multi-device cloud service exists yet. Multiple devices cannot share live data until a backend, device identity, authenticated sync API, conflict handling and encrypted transport are implemented.
-- No password-protected owner approval flow or worker invitation system yet.
-- Batch/lot/expiry/FEFO, supplier records, returns, expenses, audit UI and export/restore are incomplete.
-- No Android APK or Windows build has been produced or tested in this environment.
-- Before real pharmacy operations, complete security, data-protection, regulatory, accounting and operational testing.
+## Not implemented or not verified
 
-## Smoke-test checklist
-- [ ] Flutter format
-- [ ] Flutter analyze
-- [ ] Flutter tests
-- [ ] Android debug/release build
-- [ ] Windows desktop build
-- [ ] Install and launch on Android
-- [ ] Create store, admin and worker identities
-- [ ] Confirm role access boundaries
-- [ ] Add medicine, restart app, verify persistence
-- [ ] Sell medicine offline and verify stock decrement
-- [ ] Attempt oversell and verify full rollback
-- [ ] Verify daily close and report totals
-- [ ] Verify offline queue and online multi-device sync
+- Batch/lot records, expiry tracking, FEFO allocation, expiry notifications and expired/recalled stock blocking.
+- Camera barcode scanning and OCR for medicine name, batch and expiry labels.
+- Cloud backend deployment, authenticated device enrollment, bidirectional sync, idempotency, conflict handling and encrypted recovery.
+- Email transport, SMTP/provider credentials, retries and delivery receipts. Existing report jobs only create local outbox records.
+- Full Android physical-device smoke test.
+- Verified backup/export/restore workflow.
+- Production-grade authentication/session storage and server-enforced authorization. Local role checks are not a substitute for a trusted server boundary.
+- Full regulatory, privacy, security and accounting review for commercial pharmacy use.
+
+## Test coverage currently present
+
+The existing unit-test file contains two accounting tests for revenue, cost snapshots and negative gross profit. These do not exercise SQLite persistence, user onboarding, stock deduction, expired stock, camera, cloud sync, email delivery or Android hardware.
+
+## Required acceptance tests before live use
+
+- [ ] Fresh install has zero medicines, batches and sales; all dashboard totals start at zero.
+- [ ] Create owner account and configure the store.
+- [ ] Add medicine and at least two batches with different expiry dates.
+- [ ] Confirm FEFO selects the earliest valid expiry batch.
+- [ ] Confirm expired stock is blocked and cannot be sold.
+- [ ] Sell an item; verify batch quantity, total stock, sale history and profit.
+- [ ] Attempt overselling; verify the entire transaction rolls back.
+- [ ] Force-close/reopen app and verify persistence.
+- [ ] Scan barcode and OCR a real medicine label; manually confirm extracted values before saving.
+- [ ] Sync two enrolled Android devices, including offline edits and conflict handling.
+- [ ] Send daily/weekly reports to controlled test mailboxes and inspect delivery/bounce results.
+- [ ] Install release APK on physical Android device and test camera, storage, network loss and restore.
+
+## External prerequisites
+
+Cloud synchronization requires a configured backend project and credentials. Email delivery requires a configured provider and credentials. Hardware acceptance requires a physical Android device and user-granted camera permission. Do not place production secrets in source control.

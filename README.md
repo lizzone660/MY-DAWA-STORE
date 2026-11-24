@@ -1,32 +1,47 @@
 # MY DAWA STORE
 
-Offline-first pharmacy inventory and point-of-sale application for Tanzanian medicine shops.
+Offline-first pharmacy inventory and point-of-sale application for Tanzanian medicine shops. Currency: whole TZS shillings.
 
-## Current capabilities
-- Flutter foundation targeting Android and desktop from one codebase.
-- Dark navy, metallic and violet pharmacy dashboard.
-- Local SQLite medicine catalogue.
-- Medicine search by name/barcode and quick-sale cart.
-- Sale posting with atomic stock deduction and purchase-cost snapshots.
-- Admin inventory add/edit prototype.
-- GitHub Actions formatting, analysis and unit-test workflow.
+## Implemented foundation
+
+- Flutter application targeting Android and desktop.
+- Dark pharmacy dashboard and responsive navigation.
+- Local SQLite medicine catalogue and local owner/worker accounts.
+- Medicine search by name or barcode text.
+- Quick-sale cart and sale posting with transactional stock deduction.
+- Sale-time purchase-cost snapshots for historical gross-profit calculations.
+- Local sales list and daily totals derived from stored transactions.
+- GitHub Actions formatting, analysis, unit tests and Android release APK build.
+
+A clean install starts with no medicine catalogue or sales seeded by the application. The first owner creates a store profile; the owner must enter their own catalogue and opening stock. Dashboard totals should therefore begin at zero. Existing installations retain their local database unless the user clears app storage or uninstalls the app.
 
 ## Run locally
+
 Install Flutter stable, then:
 
 ```bash
 flutter pub get
+dart format --output=none --set-exit-if-changed lib test
 flutter analyze
 flutter test
 flutter run
 ```
 
-Build commands:
-- Android: `flutter build apk --release`
-- Windows: `flutter build windows --release`
+Build Android: `flutter build apk --release`
 
-## Status
-This is an active development prototype, not a production-ready pharmacy POS. Authentication and server-enforced roles, cloud sync, daily closing, email delivery, reports connected to live sales, batch/expiry controls, backups and security/regulatory reviews remain incomplete. Do not use it for live pharmacy accounting until those controls are completed and verified.
+## Current release status
 
-## Accounting
-All monetary amounts are whole TZS integers. Each sale line stores the purchase cost at the time of sale so later price edits do not rewrite historical gross profit. Sale lines and stock deduction are committed in a single SQLite transaction.
+This repository remains a development prototype and is not approved for live pharmacy operations. The following are not yet implemented or verified end-to-end:
+
+- Batch/lot inventory, expiry dates, FEFO allocation and expired-stock sale blocking.
+- Camera barcode scanning and medicine-label/expiry OCR.
+- A deployed authenticated cloud backend, multi-device synchronization, conflict resolution and recovery.
+- Outbound email delivery and verified daily/weekly report delivery.
+- Full Android device smoke testing, including camera permissions, real scanning, sale flow, restart persistence and backup/restore.
+- Production security, role-boundary, privacy, regulatory and accounting review.
+
+GitHub Actions builds an APK as a workflow artifact when the pipeline succeeds. A successful CI build is not the same as installing and testing the APK on a physical Android device.
+
+## Accounting invariants
+
+Money is stored as whole TZS integers. Each sale line stores its purchase cost at the time of sale. Sale lines and stock deduction are committed in one SQLite transaction; insufficient stock should reject the transaction.
