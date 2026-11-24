@@ -35,10 +35,6 @@ class _StoreShellState extends State<StoreShell> {
   void dispose() { _closingTimer?.cancel(); super.dispose(); }
 
   Future<void> _initializeLocalStore() async {
-    final existing = await _repository.medicines();
-    if (existing.isEmpty) {
-      for (final medicine in _medicines) { await _repository.saveMedicine(medicine, actorId: _actorId); }
-    }
     await _closingService.closePreviousDay();
     await _closingService.closeIfDue();
     final profile = await _authRepository.storeProfile();
@@ -48,17 +44,12 @@ class _StoreShellState extends State<StoreShell> {
 
   Future<void> _refreshMedicines() async {
     final rows = await _repository.medicines();
+    final metrics = await _repository.dashboardMetrics();
     if (!mounted) return;
-    setState(() { _medicines = rows; _loading = false; });
+    setState(() { _medicines = rows; _metrics = metrics; _loading = false; });
   }
   bool get _isAdmin => widget.user.isAdmin;
-  List<Medicine> _medicines = [
-    const Medicine(id:'m1', name:'Paracetamol 500mg', purchasePrice:300, sellingPrice:500, quantity:120),
-    const Medicine(id:'m2', name:'Amoxicillin 500mg', purchasePrice:1200, sellingPrice:1800, quantity:42),
-    const Medicine(id:'m3', name:'ORS Sachets', purchasePrice:450, sellingPrice:700, quantity:68),
-    const Medicine(id:'m4', name:'Cetirizine 10mg', purchasePrice:250, sellingPrice:500, quantity:18),
-    const Medicine(id:'m5', name:'Vitamin C 1000mg', purchasePrice:900, sellingPrice:1400, quantity:7),
-  ];
+  List<Medicine> _medicines = [];
 
   @override
   Widget build(BuildContext context) {
@@ -215,7 +206,7 @@ class _StoreShellState extends State<StoreShell> {
           barcode: barcode.text.trim().isEmpty ? null : barcode.text.trim(),
           reorderLevel: r,
         );
-        await _repository.saveMedicine(medicine);
+        await _repository.saveMedicine(medicine, actorId: _actorId);
         await _refreshMedicines();
       }
     }
