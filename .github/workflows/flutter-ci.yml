@@ -40,6 +40,19 @@ jobs:
           path: build/web
           if-no-files-found: error
           retention-days: 30
+      - name: Deploy live browser preview to Netlify
+        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+        working-directory: build/web
+        env:
+          NETLIFY_MCP_PROXY_PATH: ${{ secrets.NETLIFY_MCP_PROXY_PATH }}
+        run: |
+          test -n "$NETLIFY_MCP_PROXY_PATH"
+          cat > netlify.toml <<'EOF'
+          [build]
+            publish = "."
+            command = "echo Deploying prebuilt Flutter Web output"
+          EOF
+          npx -y @netlify/mcp@latest --site-id 15189788-5495-4ffd-9fb2-e3b9463bd11f --proxy-path "$NETLIFY_MCP_PROXY_PATH"
       - name: Configure persistent Android release signing
         env:
           ANDROID_KEYSTORE_GZIP_BASE64: ${{ secrets.ANDROID_KEYSTORE_GZIP_BASE64 }}
