@@ -7,6 +7,7 @@ import 'auth_gate.dart';
 import '../services/daily_closing_service.dart';
 import '../services/weekly_stock_alert_service.dart';
 import 'dart:async';
+import 'module_hub.dart';
 
 class StoreShell extends StatefulWidget {
   const StoreShell({super.key, required this.user});
@@ -57,7 +58,7 @@ class _StoreShellState extends State<StoreShell> {
 
   @override
   Widget build(BuildContext context) {
-    final pages = [_dashboard(), SalesPage(medicines: _medicines, isAdmin: _isAdmin, actorId: _actorId, onSaleRecorded: _refreshMedicines), _inventory(), _reports(), if (_isAdmin) _workers()];
+    final pages = [_dashboard(), SalesPage(medicines: _medicines, isAdmin: _isAdmin, actorId: _actorId, onSaleRecorded: _refreshMedicines), _inventory(), _reports(), _isAdmin ? _workers() : _lockedAdmin(), const ModuleHubPage()];
     return Scaffold(
       appBar: AppBar(
         titleSpacing: 18,
@@ -84,6 +85,7 @@ class _StoreShellState extends State<StoreShell> {
               NavigationDestination(icon: Icon(Icons.point_of_sale), label: 'Sell'),
               NavigationDestination(icon: Icon(Icons.medication_outlined), label: 'Stock'),
               NavigationDestination(icon: Icon(Icons.analytics_outlined), label: 'Reports'),
+              NavigationDestination(icon: Icon(Icons.menu), label: 'More'),
             ]) : null,
     );
   }
@@ -93,6 +95,7 @@ class _StoreShellState extends State<StoreShell> {
     const Padding(padding: EdgeInsets.symmetric(horizontal: 18), child: Text('WORKSPACE', style: TextStyle(color: Color(0xFF77809F), fontSize: 10, letterSpacing: 2, fontWeight: FontWeight.bold))),
     const SizedBox(height: 12),
     _nav(Icons.dashboard_outlined, 'Dashboard', 0), _nav(Icons.point_of_sale, 'Sales center', 1), _nav(Icons.medication_outlined, 'Medicine stock', 2), _nav(Icons.bar_chart_rounded, 'Reports', 3),
+    _nav(Icons.apps_outlined, 'All modules', 5),
     if (_isAdmin) ...[
       const Padding(padding: EdgeInsets.fromLTRB(18, 24, 18, 10), child: Text('ADMINISTRATION', style: TextStyle(color: Color(0xFF77809F), fontSize: 10, letterSpacing: 2, fontWeight: FontWeight.bold))),
       _nav(Icons.people_outline, 'Workers', 4),
@@ -102,6 +105,8 @@ class _StoreShellState extends State<StoreShell> {
   ]));
 
   Widget _nav(IconData icon, String label, int index, {bool enabled = true}) => ListTile(dense: true, enabled: enabled, selected: _index == index, selectedTileColor: const Color(0xFF292044), leading: Icon(icon, size: 19, color: _index == index ? const Color(0xFFB69AFF) : const Color(0xFF8992B2)), title: Text(label, style: const TextStyle(fontSize: 13)), onTap: enabled ? () => setState(() => _index = index) : null);
+
+  Widget _lockedAdmin() => const Center(child: Text('This section is available to administrators only.'));
 
   Widget _dashboard() => LayoutBuilder(builder: (context, constraints) {
     final wide = constraints.maxWidth > 850;
