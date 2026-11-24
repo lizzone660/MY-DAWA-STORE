@@ -59,17 +59,24 @@ jobs:
           '''
           if "val keystoreProperties =" not in s:
               s = s.replace(marker, props + marker, 1)
+          signing = '''    signingConfigs {
+                  create("release") {
+                      keyAlias = keystoreProperties["keyAlias"] as String
+                      keyPassword = keystoreProperties["keyPassword"] as String
+                      storeFile = file(keystoreProperties["storeFile"] as String)
+                      storePassword = keystoreProperties["storePassword"] as String
+                  }
+              }
+
+          '''
+          if 'signingConfigs {\n        create("release")' not in s:
+              s = s.replace("    buildTypes {", signing + "    buildTypes {", 1)
           s = s.replace(
               'signingConfig = signingConfigs.getByName("debug")',
-              '''signingConfig = signingConfigs.create("release").apply {
-                          keyAlias = keystoreProperties["keyAlias"] as String
-                          keyPassword = keystoreProperties["keyPassword"] as String
-                          storeFile = file(keystoreProperties["storeFile"] as String)
-                          storePassword = keystoreProperties["storePassword"] as String
-                      }''',
+              'signingConfig = signingConfigs.getByName("release")',
               1
           )
-          if 'signingConfigs.create("release")' not in s:
+          if 'signingConfig = signingConfigs.getByName("release")' not in s:
               raise SystemExit("Could not configure release signing in generated Gradle file")
           p.write_text(s)
           PY
@@ -79,7 +86,9 @@ jobs:
         run: |
           APK=build/app/outputs/flutter-apk/app-release.apk
           test -s "$APK"
-          jarsigner -verify -verbose -certs "$APK"
+          APKSIGNER=$(find "$ANDROID_HOME/build-tools" -name apksigner -type f | sort -V | tail -1)
+          test -n "$APKSIGNER"
+          "$APKSIGNER" verify --verbose --print-certs "$APK"
           sha256sum "$APK" > "$APK.sha256"
       - name: Upload signed Android APK
         uses: actions/upload-artifact@v4
