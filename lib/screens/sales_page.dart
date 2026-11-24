@@ -10,6 +10,7 @@ class SalesPage extends StatefulWidget {
 
 class _SalesPageState extends State<SalesPage> {
   final _search = TextEditingController();
+  final _searchFocus = FocusNode();
   final List<_CartLine> _cart = [];
   String _money(int value) => 'TZS ' + value.toString();
 
@@ -33,7 +34,7 @@ class _SalesPageState extends State<SalesPage> {
 
   int get _total => _cart.fold(0, (sum, line) => sum + line.quantity * line.unitPrice);
   int get _profit => _cart.fold(0, (sum, line) => sum + line.quantity * (line.unitPrice - line.medicine.purchasePrice));
-  @override void dispose() { _search.dispose(); super.dispose(); }
+  @override void dispose() { _search.dispose(); _searchFocus.dispose(); super.dispose(); }
 
   @override
   Widget build(BuildContext context) => LayoutBuilder(builder: (context, box) {
@@ -41,7 +42,7 @@ class _SalesPageState extends State<SalesPage> {
     return Padding(padding: const EdgeInsets.all(18), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       Row(children: [
         const Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text('Sales center', style: TextStyle(fontSize: 23, fontWeight: FontWeight.w800)), Text('Search, add quantities and record a sale quickly', style: TextStyle(color: Color(0xFF929BB9), fontSize: 12))])),
-        IconButton.filledTonal(onPressed: () => FocusScope.of(context).requestFocus(FocusNode()), icon: const Icon(Icons.search), tooltip: 'Search medicine'),
+        IconButton.filledTonal(onPressed: () => _searchFocus.requestFocus(), icon: const Icon(Icons.search), tooltip: 'Search medicine'),
       ]),
       const SizedBox(height: 16),
       Expanded(child: wide ? Row(crossAxisAlignment: CrossAxisAlignment.start, children: [Expanded(flex: 3, child: _catalog()), const SizedBox(width: 14), Expanded(flex: 2, child: _checkout())]) : Column(children: [Expanded(flex: 3, child: _catalog()), const SizedBox(height: 12), Expanded(flex: 2, child: _checkout())])),
@@ -49,7 +50,7 @@ class _SalesPageState extends State<SalesPage> {
   });
 
   Widget _catalog() => Card(child: Padding(padding: const EdgeInsets.all(14), child: Column(children: [
-    TextField(controller: _search, onChanged: (_) => setState(() {}), decoration: const InputDecoration(prefixIcon: Icon(Icons.search), hintText: 'Type medicine name or scan barcode...', suffixIcon: Icon(Icons.qr_code_scanner))),
+    TextField(focusNode: _searchFocus, controller: _search, onChanged: (_) => setState(() {}), decoration: const InputDecoration(prefixIcon: Icon(Icons.search), hintText: 'Type medicine name or scan barcode...', suffixIcon: Icon(Icons.qr_code_scanner))),
     const SizedBox(height: 10),
     Expanded(child: _matches.isEmpty ? const Center(child: Text('No medicine found. Check spelling or ask admin to add stock.')) : ListView.separated(
       itemCount: _matches.length, separatorBuilder: (_, __) => const Divider(height: 1, color: Color(0xFF292D45)),
