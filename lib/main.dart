@@ -25,7 +25,7 @@ class MyDawaStoreApp extends StatelessWidget {
           surface: const Color(0xFF111322),
         ),
         scaffoldBackgroundColor: const Color(0xFF090B14),
-        cardTheme: CardTheme(
+        cardTheme: CardThemeData(
           color: const Color(0xFF15182A),
           elevation: 0,
           shape: RoundedRectangleBorder(
