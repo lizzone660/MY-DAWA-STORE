@@ -27,8 +27,19 @@ jobs:
         run: flutter analyze --no-fatal-infos --no-fatal-warnings
       - name: Unit tests
         run: flutter test
-      - name: Generate Android platform scaffolding
-        run: flutter create --platforms=android --org com.mydawastore .
+      - name: Generate Android and Web platform scaffolding
+        run: flutter create --platforms=android,web --org com.mydawastore .
+      - name: Prepare SQLite WebAssembly assets
+        run: dart run sqflite_common_ffi_web:setup
+      - name: Build browser preview
+        run: flutter build web --release
+      - name: Upload browser preview
+        uses: actions/upload-artifact@v4
+        with:
+          name: my-dawa-store-web-preview
+          path: build/web
+          if-no-files-found: error
+          retention-days: 30
       - name: Configure persistent Android release signing
         env:
           ANDROID_KEYSTORE_GZIP_BASE64: ${{ secrets.ANDROID_KEYSTORE_GZIP_BASE64 }}

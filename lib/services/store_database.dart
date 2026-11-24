@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:sqflite/sqflite.dart';
@@ -48,9 +49,13 @@ class StoreDatabase {
 
   Future<Database> get database async {
     if (_db != null) return _db!;
-    final dir = await getApplicationDocumentsDirectory();
+    // Web databases are named in browser IndexedDB; native platforms use the
+    // existing application documents directory so installed user data stays put.
+    final databasePath = kIsWeb
+        ? 'my_dawa_store.db'
+        : p.join((await getApplicationDocumentsDirectory()).path, 'my_dawa_store.db');
     _db = await openDatabase(
-      p.join(dir.path, 'my_dawa_store.db'),
+      databasePath,
       version: 2,
       onCreate: (db, version) async => _createCore(db),
       onUpgrade: (db, oldVersion, newVersion) async {
