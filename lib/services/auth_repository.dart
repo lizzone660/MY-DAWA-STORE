@@ -33,8 +33,8 @@ class AuthRepository {
     required String password, required String gender, required String reportEmail,
     required String openingTime, required String closingTime,
   }) async {
-    if (storeName.trim().isEmpty || ownerName.trim().isEmpty || !_validEmail(email) || password.length < 10) {
-      throw ArgumentError('Provide store and owner names, a valid email, and a password of at least 10 characters.');
+    if (storeName.trim().isEmpty || ownerName.trim().isEmpty || !_validEmail(email) || password.length < 10 ||\n        !_validTime(openingTime) || !_validTime(closingTime) ||\n        (reportEmail.trim().isNotEmpty && !_validEmail(reportEmail))) {
+      throw ArgumentError('Provide valid store/owner details, email, password (10+ characters), and HH:mm opening/closing times.');
     }
     final db = await _database.database;
     await db.transaction((txn) async {
