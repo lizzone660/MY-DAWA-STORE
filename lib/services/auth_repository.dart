@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:cryptography/cryptography.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:uuid/uuid.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'store_database.dart';
 
 class LocalUser {
@@ -15,6 +16,7 @@ class AuthRepository {
   AuthRepository({StoreDatabase? database}) : _database = database ?? StoreDatabase.instance;
   final StoreDatabase _database;
   static const _uuid = Uuid();
+  static const _sessionKey = 'my_dawa_store_signed_in_user';
   static final _kdf = Pbkdf2(macAlgorithm: Hmac.sha256(), iterations: 120000, bits: 256);
 
   Future<String> _hash(String password, List<int> salt) async {
@@ -65,8 +67,32 @@ class AuthRepository {
     final salt = base64Decode(row['password_salt'] as String);
     final candidate = await _hash(password, salt);
     if (candidate != row['password_hash']) return null;
+    final user = LocalUser(id: row['id'] as String, name: row['display_name'] as String,
+      email: row['email'] as String, role: row['role'] as String, gender: row['gender'] as String);
+    final preferences = await SharedPreferences.getInstance();
+    await preferences.setString(_sessionKey, user.id);
+    return user;
+  }
+
+  Future<LocalUser?> currentUser() async {
+    final preferences = await SharedPreferences.getInstance();
+    final id = preferences.getString(_sessionKey);
+    if (id == null || id.isEmpty) return null;
+    final db = await _database.database;
+    final rows = await db.query('store_users',
+      where: 'id = ? AND is_active = 1', whereArgs: [id], limit: 1);
+    if (rows.isEmpty) {
+      await preferences.remove(_sessionKey);
+      return null;
+    }
+    final row = rows.first;
     return LocalUser(id: row['id'] as String, name: row['display_name'] as String,
       email: row['email'] as String, role: row['role'] as String, gender: row['gender'] as String);
+  }
+
+  Future<void> signOut() async {
+    final preferences = await SharedPreferences.getInstance();
+    await preferences.remove(_sessionKey);
   }
 
   Future<void> addWorker({required String name, required String email, required String password, required String actorId}) async {

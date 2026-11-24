@@ -22,8 +22,17 @@ class _AuthGateState extends State<AuthGate> {
 
   @override void initState() { super.initState(); _check(); }
   Future<void> _check() async {
-    try { final needed = await _auth.needsSetup(); if (mounted) setState(() { _setup = needed; _loading = false; }); }
-    catch (e) { if (mounted) setState(() { _error = e.toString(); _loading = false; }); }
+    try {
+      final savedUser = await _auth.currentUser();
+      if (savedUser != null && mounted) {
+        Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (_) => StoreShell(user: savedUser)));
+        return;
+      }
+      final needed = await _auth.needsSetup();
+      if (mounted) setState(() { _setup = needed; _loading = false; });
+    } catch (e) {
+      if (mounted) setState(() { _error = e.toString(); _loading = false; });
+    }
   }
   @override void dispose() {
     _store.dispose(); _name.dispose(); _email.dispose(); _password.dispose(); _reportEmail.dispose(); _opening.dispose(); _closing.dispose(); super.dispose();

@@ -62,6 +62,10 @@ class _StoreShellState extends State<StoreShell> {
     final pages = [_dashboard(), SalesPage(medicines: _medicines, isAdmin: _isAdmin, actorId: _actorId, onSaleRecorded: _refreshMedicines), _inventory(), _reports(), _isAdmin ? _workers() : _lockedAdmin(), const ModuleHubPage(), NotificationsPage()];
     return Scaffold(
       appBar: AppBar(
+        flexibleSpace: const DecoratedBox(decoration: BoxDecoration(
+          gradient: LinearGradient(colors: [Color(0xFF063D3B), Color(0xFF123A5A), Color(0xFF33245D)]),
+        )),
+        backgroundColor: Colors.transparent,
         titleSpacing: 18,
         title: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Text(_storeName.toUpperCase(), style: TextStyle(fontWeight: FontWeight.w900, letterSpacing: 1.4, fontSize: 16)),
@@ -70,16 +74,27 @@ class _StoreShellState extends State<StoreShell> {
         actions: [
           IconButton(tooltip: 'Search medicine', onPressed: () => showSearch(context: context, delegate: MedicineSearchDelegate(_medicines)), icon: const Icon(Icons.search, size: 27)),
           IconButton(tooltip: 'Notifications', onPressed: () => setState(() => _index = 6), icon: const Icon(Icons.notifications_none)),
-          IconButton(tooltip: 'Sign out', onPressed: () => Navigator.of(context).pushAndRemoveUntil(
-            MaterialPageRoute(builder: (_) => const AuthGate()), (route) => false),
-            icon: const Icon(Icons.logout_rounded)),
+          IconButton(tooltip: 'Sign out', onPressed: () async {
+            await _authRepository.signOut();
+            if (!mounted) return;
+            Navigator.of(context).pushAndRemoveUntil(
+              MaterialPageRoute(builder: (_) => const AuthGate()), (route) => false);
+          }, icon: const Icon(Icons.logout_rounded)),
           const SizedBox(width: 8),
         ],
       ),
-      body: _loading ? const Center(child: CircularProgressIndicator()) : Row(children: [
-        if (MediaQuery.sizeOf(context).width >= 760) _sidebar(),
-        Expanded(child: IndexedStack(index: _index, children: pages)),
-      ]),
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft, end: Alignment.bottomRight,
+            colors: [Color(0xFF071D22), Color(0xFF0B2430), Color(0xFF10172B)],
+          ),
+        ),
+        child: _loading ? const Center(child: CircularProgressIndicator()) : Row(children: [
+          if (MediaQuery.sizeOf(context).width >= 760) _sidebar(),
+          Expanded(child: IndexedStack(index: _index, children: pages)),
+        ]),
+      ),
       bottomNavigationBar: MediaQuery.sizeOf(context).width < 760
           ? NavigationBar(selectedIndex: _index >= 5 ? 4 : _index, onDestinationSelected: (v) => setState(() => _index = v == 4 ? 5 : v), destinations: const [
               NavigationDestination(icon: Icon(Icons.grid_view_rounded), label: 'Home'),
