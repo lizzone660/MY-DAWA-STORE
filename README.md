@@ -21,13 +21,15 @@ Install Flutter stable, then:
 
 ```bash
 flutter pub get
-dart format --output=none --set-exit-if-changed lib test
+dart format lib test
 flutter analyze
 flutter test
+flutter create --platforms=android --org com.mydawastore .
+flutter build apk --release
 flutter run
 ```
 
-Build Android: `flutter build apk --release`
+The repository does not currently contain checked-in Android platform scaffolding. The CI workflow generates the standard Android project before building the release APK.
 
 ## Current release status
 

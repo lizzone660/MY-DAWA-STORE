@@ -11,7 +11,7 @@
 - Sale-time purchase-cost snapshots support historical gross-profit calculations.
 - Dashboard and daily sales list read local database totals.
 - Daily closing and weekly alert services enqueue local outbox records; this is not proof of email delivery.
-- GitHub Actions checks formatting, runs static analysis and unit tests, and builds an Android release APK artifact.
+- GitHub Actions formats Dart sources, runs static analysis and unit tests, generates standard Android platform scaffolding, and attempts a release APK build.
 
 ## Not implemented or not verified
 
