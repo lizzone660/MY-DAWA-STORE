@@ -8,6 +8,7 @@ import '../services/daily_closing_service.dart';
 import '../services/weekly_stock_alert_service.dart';
 import 'dart:async';
 import 'module_hub.dart';
+import 'notifications_page.dart';
 
 class StoreShell extends StatefulWidget {
   const StoreShell({super.key, required this.user});
@@ -58,7 +59,7 @@ class _StoreShellState extends State<StoreShell> {
 
   @override
   Widget build(BuildContext context) {
-    final pages = [_dashboard(), SalesPage(medicines: _medicines, isAdmin: _isAdmin, actorId: _actorId, onSaleRecorded: _refreshMedicines), _inventory(), _reports(), _isAdmin ? _workers() : _lockedAdmin(), const ModuleHubPage()];
+    final pages = [_dashboard(), SalesPage(medicines: _medicines, isAdmin: _isAdmin, actorId: _actorId, onSaleRecorded: _refreshMedicines), _inventory(), _reports(), _isAdmin ? _workers() : _lockedAdmin(), const ModuleHubPage(), NotificationsPage()];
     return Scaffold(
       appBar: AppBar(
         titleSpacing: 18,
@@ -68,7 +69,7 @@ class _StoreShellState extends State<StoreShell> {
         ]),
         actions: [
           IconButton(tooltip: 'Search medicine', onPressed: () => showSearch(context: context, delegate: MedicineSearchDelegate(_medicines)), icon: const Icon(Icons.search, size: 27)),
-          IconButton(tooltip: 'Notifications', onPressed: () {}, icon: const Icon(Icons.notifications_none)),
+          IconButton(tooltip: 'Notifications', onPressed: () => setState(() => _index = 6), icon: const Icon(Icons.notifications_none)),
           IconButton(tooltip: 'Sign out', onPressed: () => Navigator.of(context).pushAndRemoveUntil(
             MaterialPageRoute(builder: (_) => const AuthGate()), (route) => false),
             icon: const Icon(Icons.logout_rounded)),
@@ -80,7 +81,7 @@ class _StoreShellState extends State<StoreShell> {
         Expanded(child: IndexedStack(index: _index, children: pages)),
       ]),
       bottomNavigationBar: MediaQuery.sizeOf(context).width < 760
-          ? NavigationBar(selectedIndex: _index == 5 ? 4 : _index, onDestinationSelected: (v) => setState(() => _index = v == 4 ? 5 : v), destinations: const [
+          ? NavigationBar(selectedIndex: _index >= 5 ? 4 : _index, onDestinationSelected: (v) => setState(() => _index = v == 4 ? 5 : v), destinations: const [
               NavigationDestination(icon: Icon(Icons.grid_view_rounded), label: 'Home'),
               NavigationDestination(icon: Icon(Icons.point_of_sale), label: 'Sell'),
               NavigationDestination(icon: Icon(Icons.medication_outlined), label: 'Stock'),
@@ -96,6 +97,7 @@ class _StoreShellState extends State<StoreShell> {
     const SizedBox(height: 12),
     _nav(Icons.dashboard_outlined, 'Dashboard', 0), _nav(Icons.point_of_sale, 'Sales center', 1), _nav(Icons.medication_outlined, 'Medicine stock', 2), _nav(Icons.bar_chart_rounded, 'Reports', 3),
     _nav(Icons.apps_outlined, 'All modules', 5),
+    _nav(Icons.notifications_outlined, 'Notifications', 6),
     if (_isAdmin) ...[
       const Padding(padding: EdgeInsets.fromLTRB(18, 24, 18, 10), child: Text('ADMINISTRATION', style: TextStyle(color: Color(0xFF77809F), fontSize: 10, letterSpacing: 2, fontWeight: FontWeight.bold))),
       _nav(Icons.people_outline, 'Workers', 4),
