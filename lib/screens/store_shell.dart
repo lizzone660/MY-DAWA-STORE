@@ -162,20 +162,53 @@ class _StoreShellState extends State<StoreShell> {
   }
   Widget _stockIntelligence() {
     final groups = <String, List<Medicine>>{
-      'HOT SELLS': (_metrics['hotSales'] as List<Medicine>?) ?? [],
-      'MEDIUM SELLS': (_metrics['mediumSales'] as List<Medicine>?) ?? [],
-      'SLOW SELLS': (_metrics['slowSales'] as List<Medicine>?) ?? [],
-      'NOT MOVING (30 DAYS)': (_metrics['dormant'] as List<Medicine>?) ?? [],
+      'HOT SELLS': (_metrics['hotSales'] as List<Medicine>?) ?? <Medicine>[],
+      'MEDIUM SELLS': (_metrics['mediumSales'] as List<Medicine>?) ?? <Medicine>[],
+      'SLOW SELLS': (_metrics['slowSales'] as List<Medicine>?) ?? <Medicine>[],
+      'NOT MOVING (30 DAYS)': (_metrics['dormant'] as List<Medicine>?) ?? <Medicine>[],
     };
-    return Wrap(spacing:12,runSpacing:12,children:groups.entries.map((entry) => SizedBox(
-      width:MediaQuery.sizeOf(context).width > 1000 ? 260 : MediaQuery.sizeOf(context).width > 650 ? 300 : double.infinity,
-      child:_sectionCard(entry.key,entry.value.isEmpty
-        ? const Text('No matching medicines yet.',style:TextStyle(color:Color(0xFF929BB9),fontSize:12))
-        : Column(children:entry.value.take(5).map((m)=>ListTile(
-          dense:true,contentPadding:EdgeInsets.zero,title:Text(m.name,style:const TextStyle(fontSize:12)),
-          subtitle:Text('${m.quantity} units remaining',style:const TextStyle(fontSize:11,color:Color(0xFF929BB9))),
-        )).toList()),
-    )).toList());
+    return Wrap(
+      spacing: 12,
+      runSpacing: 12,
+      children: [
+        for (final entry in groups.entries)
+          SizedBox(
+            width: MediaQuery.sizeOf(context).width > 1000
+                ? 260
+                : MediaQuery.sizeOf(context).width > 650
+                    ? 300
+                    : double.infinity,
+            child: _sectionCard(
+              entry.key,
+              entry.value.isEmpty
+                  ? const Text(
+                      'No matching medicines yet.',
+                      style: TextStyle(color: Color(0xFF929BB9), fontSize: 12),
+                    )
+                  : Column(
+                      children: [
+                        for (final medicine in entry.value.take(5))
+                          ListTile(
+                            dense: true,
+                            contentPadding: EdgeInsets.zero,
+                            title: Text(
+                              medicine.name,
+                              style: const TextStyle(fontSize: 12),
+                            ),
+                            subtitle: Text(
+                              '${medicine.quantity} units remaining',
+                              style: const TextStyle(
+                                fontSize: 11,
+                                color: Color(0xFF929BB9),
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+            ),
+          ),
+      ],
+    );
   }
 
   Widget _inventory() => ListView(padding: const EdgeInsets.all(20), children: [
