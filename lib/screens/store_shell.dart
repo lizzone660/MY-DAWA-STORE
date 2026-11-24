@@ -15,6 +15,8 @@ class StoreShell extends StatefulWidget {
 class _StoreShellState extends State<StoreShell> {
   int _index = 0;
   final _repository = StoreRepository();
+  final _authRepository = AuthRepository();
+  String _storeName = 'MY DAWA STORE';
   String get _actorId => widget.user.id;
   bool _loading = true;
 
@@ -29,6 +31,8 @@ class _StoreShellState extends State<StoreShell> {
     if (existing.isEmpty) {
       for (final medicine in _medicines) { await _repository.saveMedicine(medicine); }
     }
+    final profile = await _authRepository.storeProfile();
+    if (mounted && profile['store_name'] != null) setState(() => _storeName = profile['store_name']!);
     await _refreshMedicines();
   }
 
@@ -48,12 +52,12 @@ class _StoreShellState extends State<StoreShell> {
 
   @override
   Widget build(BuildContext context) {
-    final pages = [_dashboard(), SalesPage(medicines: _medicines, isAdmin: _isAdmin, actorId: _actorId, onSaleRecorded: _refreshMedicines), _inventory(), _reports()];
+    final pages = [_dashboard(), SalesPage(medicines: _medicines, isAdmin: _isAdmin, actorId: _actorId, onSaleRecorded: _refreshMedicines), _inventory(), _reports(), if (_isAdmin) _workers()];
     return Scaffold(
       appBar: AppBar(
         titleSpacing: 18,
         title: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          const Text('MY DAWA STORE', style: TextStyle(fontWeight: FontWeight.w900, letterSpacing: 1.4, fontSize: 16)),
+          Text(_storeName.toUpperCase(), style: TextStyle(fontWeight: FontWeight.w900, letterSpacing: 1.4, fontSize: 16)),
           Text(widget.user.name + '  •  ' + (_isAdmin ? 'ADMIN' : 'WORKER'), style: const TextStyle(fontSize: 10, color: Color(0xFF9DA6C7), letterSpacing: 1.1)),
         ]),
         actions: [
@@ -86,7 +90,7 @@ class _StoreShellState extends State<StoreShell> {
     _nav(Icons.dashboard_outlined, 'Dashboard', 0), _nav(Icons.point_of_sale, 'Sales center', 1), _nav(Icons.medication_outlined, 'Medicine stock', 2), _nav(Icons.bar_chart_rounded, 'Reports', 3),
     if (_isAdmin) ...[
       const Padding(padding: EdgeInsets.fromLTRB(18, 24, 18, 10), child: Text('ADMINISTRATION', style: TextStyle(color: Color(0xFF77809F), fontSize: 10, letterSpacing: 2, fontWeight: FontWeight.bold))),
-      _nav(Icons.people_outline, 'Workers', 4, enabled: false), _nav(Icons.settings_outlined, 'Store settings', 5, enabled: false),
+      _nav(Icons.people_outline, 'Workers', 4),
     ],
     const Spacer(),
     const Padding(padding: EdgeInsets.all(16), child: Text('OFFLINE MODE READY\nLocal-first workspace', style: TextStyle(color: Color(0xFF7D87A8), fontSize: 11, height: 1.6))),
@@ -206,6 +210,43 @@ class _StoreShellState extends State<StoreShell> {
       }
     }
     name.dispose(); cost.dispose(); price.dispose(); qty.dispose(); barcode.dispose(); reorder.dispose();
+  }
+
+  Widget _workers() => ListView(padding: const EdgeInsets.all(20), children: [
+    Row(children: [
+      const Expanded(child: Text('Worker accounts', style: TextStyle(fontSize: 23, fontWeight: FontWeight.w800))),
+      FilledButton.icon(onPressed: _addWorker, icon: const Icon(Icons.person_add_alt_1), label: const Text('Add worker')),
+    ]),
+    const SizedBox(height: 10),
+    const Text('Create individual local sign-in accounts. Each device must be enrolled separately until cloud synchronization is configured.', style: TextStyle(color: Color(0xFF929BB9), fontSize: 12)),
+  ]);
+
+  Future<void> _addWorker() async {
+    if (!_isAdmin) return;
+    final name = TextEditingController();
+    final email = TextEditingController();
+    final password = TextEditingController();
+    final accepted = await showDialog<bool>(context: context, builder: (ctx) => AlertDialog(
+      title: const Text('Create worker account'),
+      content: SizedBox(width: 420, child: Column(mainAxisSize: MainAxisSize.min, children: [
+        TextField(controller: name, decoration: const InputDecoration(labelText: 'Worker full name')),
+        TextField(controller: email, keyboardType: TextInputType.emailAddress, decoration: const InputDecoration(labelText: 'Worker email')),
+        TextField(controller: password, obscureText: true, decoration: const InputDecoration(labelText: 'Temporary password (10+ characters)')),
+      ])),
+      actions: [
+        TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+        FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Create account')),
+      ],
+    ));
+    if (accepted == true) {
+      try {
+        await _authRepository.addWorker(name: name.text, email: email.text, password: password.text, actorId: _actorId);
+        if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Worker account created on this device.')));
+      } catch (e) {
+        if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
+      }
+    }
+    name.dispose(); email.dispose(); password.dispose();
   }
 
   Widget _reports() => ListView(padding: const EdgeInsets.all(20), children: [
