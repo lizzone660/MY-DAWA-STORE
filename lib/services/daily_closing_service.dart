@@ -35,6 +35,7 @@ class DailyClosingService {
     final existing = await db.query('daily_closings', where: 'business_date = ?', whereArgs: [dateKey], limit: 1);
     if (existing.isNotEmpty) return false;
     final totals = await _repository.dailyTotals(day);
+    final profile = await db.query('store_profile', where: 'id = 1', limit: 1);
     final closedAt = DateTime.now().toIso8601String();
     await db.transaction((txn) async {
       final duplicate = await txn.query('daily_closings', where: 'business_date = ?', whereArgs: [dateKey], limit: 1);
@@ -55,7 +56,9 @@ class DailyClosingService {
           'date': dateKey,
           'revenue': totals['revenue'] ?? 0,
           'grossProfit': totals['grossProfit'] ?? 0,
-          'unitsSold': totals['units'] ?? 0,\n          'reportEmail': (profile.first['report_email'] as String?) ?? '',\n          'storeName': (profile.first['store_name'] as String?) ?? 'MY DAWA STORE',
+          'unitsSold': totals['units'] ?? 0,
+          'reportEmail': (profile.first['report_email'] as String?) ?? '',
+          'storeName': (profile.first['store_name'] as String?) ?? 'MY DAWA STORE',
         }),
         'created_at': closedAt,
       });

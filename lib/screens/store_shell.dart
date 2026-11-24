@@ -24,7 +24,8 @@ class _StoreShellState extends State<StoreShell> {
   final _weeklyAlerts = WeeklyStockAlertService();
   Timer? _closingTimer;
   String get _actorId => widget.user.id;
-  bool _loading = true;\n  Map<String, Object> _metrics = {};
+  bool _loading = true;
+  Map<String, Object> _metrics = {};
 
   @override
   void initState() {
