@@ -29,12 +29,64 @@ jobs:
         run: flutter test
       - name: Generate Android platform scaffolding
         run: flutter create --platforms=android --org com.mydawastore .
-      - name: Build Android release APK
+      - name: Configure persistent Android release signing
+        env:
+          ANDROID_KEYSTORE_GZIP_BASE64: ${{ secrets.ANDROID_KEYSTORE_GZIP_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          test -n "$ANDROID_KEYSTORE_GZIP_BASE64"
+          mkdir -p android/app
+          printf '%s' "$ANDROID_KEYSTORE_GZIP_BASE64" | base64 --decode | gzip --decompress > android/app/upload-keystore.p12
+          cat > android/key.properties <<EOF
+          storePassword=$ANDROID_KEYSTORE_PASSWORD
+          keyPassword=$ANDROID_KEY_PASSWORD
+          keyAlias=$ANDROID_KEY_ALIAS
+          storeFile=upload-keystore.p12
+          EOF
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path("android/app/build.gradle.kts")
+          s = p.read_text()
+          marker = "android {"
+          props = '''val keystoreProperties = java.util.Properties()
+          val keystorePropertiesFile = rootProject.file("key.properties")
+          if (keystorePropertiesFile.exists()) {
+              keystoreProperties.load(java.io.FileInputStream(keystorePropertiesFile))
+          }
+
+          '''
+          if "val keystoreProperties =" not in s:
+              s = s.replace(marker, props + marker, 1)
+          s = s.replace(
+              'signingConfig = signingConfigs.getByName("debug")',
+              '''signingConfig = signingConfigs.create("release").apply {
+                          keyAlias = keystoreProperties["keyAlias"] as String
+                          keyPassword = keystoreProperties["keyPassword"] as String
+                          storeFile = file(keystoreProperties["storeFile"] as String)
+                          storePassword = keystoreProperties["storePassword"] as String
+                      }''',
+              1
+          )
+          if 'signingConfigs.create("release")' not in s:
+              raise SystemExit("Could not configure release signing in generated Gradle file")
+          p.write_text(s)
+          PY
+      - name: Build signed Android release APK
         run: flutter build apk --release
-      - name: Upload Android APK
+      - name: Verify APK signature and calculate checksum
+        run: |
+          APK=build/app/outputs/flutter-apk/app-release.apk
+          test -s "$APK"
+          jarsigner -verify -verbose -certs "$APK"
+          sha256sum "$APK" > "$APK.sha256"
+      - name: Upload signed Android APK
         uses: actions/upload-artifact@v4
         with:
           name: my-dawa-store-android-apk
-          path: build/app/outputs/flutter-apk/app-release.apk
+          path: |
+            build/app/outputs/flutter-apk/app-release.apk
+            build/app/outputs/flutter-apk/app-release.apk.sha256
           if-no-files-found: error
-          retention-days: 14
+          retention-days: 30
