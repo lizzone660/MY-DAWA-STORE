@@ -38,7 +38,8 @@ class WeeklyStockAlertService {
     final utc = DateTime.utc(date.year,date.month,date.day);
     final weekday = utc.weekday;
     final thursday = utc.add(Duration(days:4-weekday));
-    final firstThursday = DateTime.utc(thursday.year,1,4);
+    final jan4 = DateTime.utc(thursday.year,1,4);
+    final firstThursday = jan4.add(Duration(days:4-jan4.weekday));
     final week = 1 + (thursday.difference(firstThursday).inDays ~/ 7);
     return '${thursday.year}-W${week.toString().padLeft(2,'0')}';
   }
