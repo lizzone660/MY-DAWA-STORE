@@ -1,31 +1,32 @@
 # MY DAWA STORE
 
-Offline-first pharmacy management for Tanzanian medicine shops. Built around local-first sales, inventory, role-based access, and eventual synchronization.
+Offline-first pharmacy inventory and point-of-sale application for Tanzanian medicine shops.
 
-## Product direction
-- Android APK and Windows desktop from one Flutter codebase.
-- Local database is the source of truth while offline.
-- Admin and worker workspaces with permission boundaries.
-- Fast medicine search in the sales workflow for both roles.
-- Search a medicine, enter quantity and selling price, confirm sale, and calculate totals immediately.
-- Cloud synchronization and email reports run only when connectivity is available.
+## Current capabilities
+- Flutter foundation targeting Android and desktop from one codebase.
+- Dark navy, metallic and violet pharmacy dashboard.
+- Local SQLite medicine catalogue.
+- Medicine search by name/barcode and quick-sale cart.
+- Sale posting with atomic stock deduction and purchase-cost snapshots.
+- Admin inventory add/edit prototype.
+- GitHub Actions formatting, analysis and unit-test workflow.
 
-## Current status
-This repository contains the initial application foundation and product specification. It is not yet a production-ready pharmacy system. Authentication, encrypted backups, cloud sync, email delivery, background closing, regulatory workflows, and full automated testing must be completed and audited before real pharmacy use.
-
-## Run
+## Run locally
 Install Flutter stable, then:
 
 ```bash
 flutter pub get
+flutter analyze
+flutter test
 flutter run
 ```
 
-For Android: `flutter build apk --release`
-For Windows: `flutter build windows --release`
+Build commands:
+- Android: `flutter build apk --release`
+- Windows: `flutter build windows --release`
 
-## Important accounting rule
-Each sale stores the unit cost snapshot used for that sale. Historical profit must never be recalculated using a later-edited purchase price. Returns, discounts, expenses, stock adjustments, and batch/expiry tracking must be recorded as auditable transactions.
+## Status
+This is an active development prototype, not a production-ready pharmacy POS. Authentication and server-enforced roles, cloud sync, daily closing, email delivery, reports connected to live sales, batch/expiry controls, backups and security/regulatory reviews remain incomplete. Do not use it for live pharmacy accounting until those controls are completed and verified.
 
-## Safety
-This is business inventory/POS software, not a clinical decision system. It must not recommend treatments or substitute for a licensed pharmacist.
+## Accounting
+All monetary amounts are whole TZS integers. Each sale line stores the purchase cost at the time of sale so later price edits do not rewrite historical gross profit. Sale lines and stock deduction are committed in a single SQLite transaction.
