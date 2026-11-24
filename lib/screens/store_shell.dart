@@ -121,12 +121,33 @@ class _StoreShellState extends State<StoreShell> {
     const SizedBox(width: 12), Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(label, style: const TextStyle(fontSize: 10, color: Color(0xFF9DA6C7), letterSpacing: 1)), const SizedBox(height: 7), Text(value, style: const TextStyle(fontSize: 19, fontWeight: FontWeight.w800), overflow: TextOverflow.ellipsis)])),
   ]))));
 
-  Widget _salesHighlights() => _sectionCard('TOP SELLING MEDICINES', Column(children: _medicines.take(4).map((m) => Padding(padding: const EdgeInsets.symmetric(vertical: 8), child: Row(children: [
-    const Icon(Icons.medication, color: Color(0xFF9C7BFA), size: 19), const SizedBox(width: 10), Expanded(child: Text(m.name, style: const TextStyle(fontSize: 13))), Text(m.quantity.toString() + ' left', style: const TextStyle(color: Color(0xFF9DA6C7), fontSize: 12)),
-  ])).toList()));
+  Widget _salesHighlights() {
+    final rows = _medicines.take(4).map((m) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        child: Row(children: [
+          const Icon(Icons.medication, color: Color(0xFF9C7BFA), size: 19),
+          const SizedBox(width: 10),
+          Expanded(child: Text(m.name, style: const TextStyle(fontSize: 13))),
+          Text(m.quantity.toString() + ' left', style: const TextStyle(color: Color(0xFF9DA6C7), fontSize: 12)),
+        ]),
+      );
+    }).toList();
+    return _sectionCard('TOP SELLING MEDICINES', Column(children: rows));
+  }
 
-  Widget _stockAlerts() => _sectionCard('RUNNING OUT', Column(children: _medicines.where((m) => m.quantity <= m.reorderLevel + 3).map((m) => ListTile(dense: true, contentPadding: EdgeInsets.zero, leading: const Icon(Icons.warning_amber_rounded, color: Color(0xFFFFB547)), title: Text(m.name, style: const TextStyle(fontSize: 12)), subtitle: Text(m.quantity.toString() + ' units remaining', style: const TextStyle(fontSize: 11))).toList()));
-
+  Widget _stockAlerts() {
+    final lowStock = _medicines.where((m) => m.quantity <= m.reorderLevel + 3).toList();
+    return _sectionCard('RUNNING OUT', Column(children: lowStock.map((m) {
+      return ListTile(
+        dense: true,
+        contentPadding: EdgeInsets.zero,
+        leading: const Icon(Icons.warning_amber_rounded, color: Color(0xFFFFB547)),
+        title: Text(m.name, style: const TextStyle(fontSize: 12)),
+        subtitle: Text(m.quantity.toString() + ' units remaining', style: const TextStyle(fontSize: 11)),
+      );
+    }).toList()));
+  }
   Widget _inventory() => ListView(padding: const EdgeInsets.all(20), children: [
     Row(children: [
       const Expanded(child: Text('Medicine inventory', style: TextStyle(fontSize: 23, fontWeight: FontWeight.w800))),
@@ -206,7 +227,17 @@ class MedicineSearchDelegate extends SearchDelegate<Medicine?> {
   @override Widget buildResults(BuildContext context) => _results(context);
   @override Widget buildSuggestions(BuildContext context) => _results(context);
   Widget _results(BuildContext context) {
-    final matches = items.where((m) => m.name.toLowerCase().contains(query.toLowerCase()) || (m.barcode ?? '').contains(query)).toList();
-    return ListView(children: matches.map((m) => ListTile(leading: const Icon(Icons.medication_outlined), title: Text(m.name), subtitle: Text('TZS ' + m.sellingPrice.toString() + ' • ' + m.quantity.toString() + ' in stock'), onTap: () => close(context, m)).toList());
+    final q = query.toLowerCase();
+    final matches = items.where((m) =>
+      m.name.toLowerCase().contains(q) || (m.barcode ?? '').contains(query)
+    ).toList();
+    return ListView(
+      children: matches.map((m) => ListTile(
+        leading: const Icon(Icons.medication_outlined),
+        title: Text(m.name),
+        subtitle: Text('TZS ' + m.sellingPrice.toString() + ' • ' + m.quantity.toString() + ' in stock'),
+        onTap: () => close(context, m),
+      )).toList(),
+    );
   }
 }
