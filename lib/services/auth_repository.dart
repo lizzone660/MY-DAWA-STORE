@@ -106,10 +106,6 @@ class AuthRepository {
     return rows.first.map((key, value) => MapEntry(key, value?.toString() ?? ''));
   }
 
-  bool _validEmail(String value) => RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+
-}
-).hasMatch(value.trim());
-  bool _validTime(String value) => RegExp(r'^(?:[01]\d|2[0-3]):[0-5]\d
-}
-).hasMatch(value.trim());
+  bool _validEmail(String value) => RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$').hasMatch(value.trim());
+  bool _validTime(String value) => RegExp(r'^(?:[01]\d|2[0-3]):[0-5]\d$').hasMatch(value.trim());
 }
